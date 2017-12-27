@@ -31,6 +31,7 @@ function initWhiteboard() {
     }, false);
 
     canvas.addEventListener("mouseover", function (e) {
+        console.log(e);
         findxy('in', e)
     }, false);
 
@@ -91,7 +92,12 @@ function findxy(res, e) {
             beforeOutPenState = penDown;
         penDown = false;
     }else if (res == "in") {
-        penDown = beforeOutPenState;
+        console.log(e);
+        prevX = currX;
+        prevY = currY;
+        currX = e.clientX - canvas.offsetLeft;
+        currY = e.clientY - canvas.offsetTop;
+        penDown = e.buttons === 1;
     }else if (res == 'move') {
         if (penDown) {
             prevX = currX;
