@@ -1,5 +1,4 @@
 # Todo
-- add a warning that connection failed
 - add different rooms
     - saving to SQL
 - add chat

@@ -45,6 +45,7 @@ function initWebsockets() {
     var port = 1234;
     ws = new WebSocket(ssl + "://" + host + ":" + port);
     ws.onmessage = function (data) {
+        if (wsReadyState = false && ws.readyState === ws.OPEN){wsReadyState = true; domConnected();}
         console.log(data);
         var val = JSON.parse(data.data);
         if (Array.isArray(val)) {
@@ -56,7 +57,8 @@ function initWebsockets() {
     };
 
     ws.onopen = function () {
-        wsReadyState = true;
+        if (ws.readyState === ws.OPEN){domConnected();}
+            wsReadyState = true;
     };
     ws.onclose = function () {
         wsReadyState = false;
@@ -64,14 +66,35 @@ function initWebsockets() {
     ws.onerror = function () {
         console.log("error!");
         console.log(arguments);
+        checkState();
     };
+
+    function checkState() {
+        if (ws.readyState === ws.CLOSING || ws.readyState === ws.CLOSED)
+            domDisconnect();
+    }
 
     setInterval(function () {
         if (queu.length > 0) {
             ws.send(JSON.stringify(queu));
+            checkState();
             queu = [];
         }
     }, 50);
 }
 
+function domDisconnect(err) {
+    document.getElementById("loading").style.display = "none";
+
+    document.getElementById("error").style.display = "inherit";
+    if (err)
+        document.getElementById("error").innerHTML = err;
+    document.getElementById("buttons").style.display = "none";
+}
+function domConnected() {
+    document.getElementById("loading").style.display = "none";
+}
+
 initWebsockets();
+
+
