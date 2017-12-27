@@ -43,18 +43,22 @@ function onMessage(msg) {
         var res = [];
         for (var i in json) {
             var val = json[i];
-            if (isNaN(val.fromX) || isNaN(val.fromY) || isNaN(val.toX) || isNaN(val.toY) || isNaN(val.width) || typeof val.color !== "string")
-                break;
+            if (json.action === "clear")
+                res.push({"action" : "clear"});
+            else if (json.action === "line") {
+                if (isNaN(val.fromX) || isNaN(val.fromY) || isNaN(val.toX) || isNaN(val.toY) || isNaN(val.width) || typeof val.color !== "string")
+                    break;
 
-            res.push({
-                "action": "line",
-                "fromX": val.fromX,
-                "fromY": val.fromY,
-                "toX": val.toX,
-                "toY": val.toY,
-                "width": val.width,
-                "color": val.color
-            });
+                res.push({
+                    "action": "line",
+                    "fromX": val.fromX,
+                    "fromY": val.fromY,
+                    "toX": val.toX,
+                    "toY": val.toY,
+                    "width": val.width,
+                    "color": val.color
+                });
+            }
         }
         wss.broadcast(JSON.stringify(res));
 
