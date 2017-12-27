@@ -1,5 +1,6 @@
 {
   "ssl": {
+    "enabled" : false,
     "privkey" : "",
     "certificate": ""
   }

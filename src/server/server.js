@@ -2,10 +2,16 @@ const WebSocket = require('ws');
 const fs = require('fs');
 const config = require('config');
 
-var server = require('https').createServer({
+var server;
+if (config.get("ssl.enabled")) {
+ server = require('https').createServer({
     key: fs.readFileSync(config.get('ssl.privkey')),
     cert: fs.readFileSync(config.get('ssl.certificate'))});
 server.listen(1234);
+}else {
+     server = require('http').createServer();
+    server.listen(1234);
+}
 
 const wss = new WebSocket.Server({ server: server });
 
@@ -34,7 +40,10 @@ wss.broadcast = function broadcast(data) {
 
 function onConnect(client, request) {
     console.log("New connection! IP: " + request.socket.address().address + ":" + request.socket.address().port);
+    client.send(JSON.stringify(current_board));
 }
+
+var current_board = [];
 
 function onMessage(msg) {
     var json = JSON.parse(msg);
@@ -43,13 +52,15 @@ function onMessage(msg) {
         var res = [];
         for (var i in json) {
             var val = json[i];
-            if (val.action === "clear")
-                res.push({"action" : "clear"});
+            if (val.action === "clear") {
+                res.push({"action": "clear"});
+                current_board = [];
+            }
             else if (val.action === "line") {
                 if (isNaN(val.fromX) || isNaN(val.fromY) || isNaN(val.toX) || isNaN(val.toY) || isNaN(val.width) || typeof val.color !== "string")
                     break;
 
-                res.push({
+                var map = {
                     "action": "line",
                     "fromX": val.fromX,
                     "fromY": val.fromY,
@@ -57,7 +68,10 @@ function onMessage(msg) {
                     "toY": val.toY,
                     "width": val.width,
                     "color": val.color
-                });
+                };
+
+                res.push(map);
+                current_board.push(map);
             }
         }
         wss.broadcast(JSON.stringify(res));
