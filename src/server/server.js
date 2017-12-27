@@ -17,7 +17,9 @@ if (config.get("ssl.enabled")) {
 const wss = new WebSocket.Server({server: server});
 
 wss.on('connection', function connection(ws, request) {
-    ws.on('message', onMessage);
+    ws.on('message', function (msg) {
+        onMessage(msg, ws)
+    });
 
     // Ping-Pong Heartbeat
     ws.isAlive = false;
@@ -50,20 +52,20 @@ function onConnect(client, request) {
     client.send(JSON.stringify(current_board));
 }
 
-var current_board = [];
+var current_board = [{"action": "dimensions", "width": 1000, "height": 1000}];
 
-function onMessage(msg) {
+function onMessage(msg, ws) {
     var json = JSON.parse(msg);
 
     if (Array.isArray(json)) {
         var res = [];
+        var changeDims = false;
         for (var i in json) {
             var val = json[i];
             if (val.action === "clear") {
                 res.push({"action": "clear"});
-                current_board = [];
-            }
-            else if (val.action === "line") {
+                current_board.splice(1);
+            } else if (val.action === "line") {
                 if (isNaN(val.fromX) || isNaN(val.fromY) || isNaN(val.toX) || isNaN(val.toY) || typeof val.color !== "string")
                     break;
 
@@ -78,26 +80,25 @@ function onMessage(msg) {
 
                 res.push(map);
                 current_board.push(map);
+            } else if (val.action === "dimensions") {
+                if (isNaN(val.width) || isNaN(val.height))
+                    break;
+
+                changeDims = true;
+                var map = {
+                    "action": "dimensions",
+                    "width": val.width,
+                    "height": val.height
+                };
+
+                res.push(map);
+                current_board[0] = map;
             }
         }
-        wss.broadcast(JSON.stringify(res));
-
-    } else {
-        if (json.action === "clear")
-            wss.broadcast({"action": clear});
-        else if (json.action === "line") {
-            if (isNaN(json.fromX) || isNaN(json.fromY) || isNaN(json.toX) || isNaN(json.toY) || typeof json.color !== "string")
-                return;
-
-            wss.broadcast(JSON.stringify({
-                "action": "line",
-                "fromX": json.fromX,
-                "fromY": json.fromY,
-                "toX": json.toX,
-                "toY": json.toY,
-                "color": json.color
-            }));
-        }
+        if (changeDims)
+            wss.broadcast(JSON.stringify(current_board));
+        else
+            wss.broadcast(JSON.stringify(res));
     }
 }
 

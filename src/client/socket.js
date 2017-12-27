@@ -21,11 +21,21 @@ function line(fromX, fromY, toX, toY, color) {
     });
 }
 
+function newSize(width, height) {
+    queue({
+        "action": "dimensions",
+        "width": width,
+        "height": height
+    });
+}
+
 function process(val) {
     if (val.action === "line")
         drawLine(val.fromX, val.fromY, val.toX, val.toY, val.color);
     else if (val.action === "clear")
         clearScreen();
+    else if (val.action === "dimensions")
+        setDimensions(val.width, val.height);
 }
 
 function initWebsockets() {

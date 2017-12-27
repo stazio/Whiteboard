@@ -4,16 +4,26 @@
     <title>White Board</title>
     <style>
         #whiteboard {
-            position: fixed;
+
             width: 100%;
             height: 100%;
             left: 0;
             top: 0;
             z-index: -1;
+            margin: 0;
+            padding: 0;
         }
 
         #buttons {
+            position: fixed;
             z-index: 1;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
         }
     </style>
 </head>
@@ -25,6 +35,7 @@
     <button name="green" style="color:green;">Green</button>
     <button name="blue" style="color:blue;">Blue</button>
     <button name="yellow" style="color:yellow;">Yellow</button>
+    Width: <input name="width"> Height: <input name="height">
 </div>
 <canvas id="whiteboard"></canvas>
 

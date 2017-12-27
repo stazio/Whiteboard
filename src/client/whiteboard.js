@@ -8,13 +8,25 @@ var canvas, ctx,
 var color = "black",
     width = 2;
 
+function setDimensions(width, height) {
+    canvas.width = width;
+    canvas.height = height;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    ctx.width = width;
+    ctx.height = height;
+
+    drawLine(width, height, 0, height, "black");
+    drawLine(width, height, width, 0, "black");
+}
+
 function initWhiteboard() {
     canvas = document.getElementById('whiteboard');
 
-    var computed = window.getComputedStyle(canvas);
-    canvas.width = parseInt(computed.width.substr(0, computed.width.length - 2));
-    canvas.height = parseInt(computed.height.substr(0, computed.height.length - 2));
-    console.log(canvas.width, canvas.height);
+    //var computed = window.getComputedStyle(canvas);
+    //canvas.width = parseInt(computed.width.substr(0, computed.width.length - 2));
+    //canvas.height = parseInt(computed.height.substr(0, computed.height.length - 2));
 
     ctx = canvas.getContext("2d");
 
@@ -35,10 +47,10 @@ function initWhiteboard() {
     }, false);
 
     var children = document.getElementById("buttons").children;
+    var widthInput, heightInput;
     for (var button in children) {
         children[button].onclick = function (ev) {
             var buttonVal = ev.target.name;
-            console.log(buttonVal);
             switch (buttonVal) {
                 case "clear":
                     clear();
@@ -48,7 +60,25 @@ function initWhiteboard() {
                     break;
             }
         };
+
+        if (children[button].name === "width")
+            widthInput = children[button];
+
+        if (children[button].name === "height")
+            heightInput = children[button];
     }
+    widthInput.addEventListener("change", function (e) {
+        var val = parseInt(widthInput.value.trim());
+        if (!isNaN(val))
+            newSize(val, heightInput.value);
+        widthInput.value = val;
+    });
+    heightInput.addEventListener("change", function (e) {
+        var val = parseInt(heightInput.value.trim());
+        if (!isNaN(val))
+            newSize(widthInput.value, val);
+        heightInput.value = val;
+    });
 }
 
 function draw() {
@@ -73,8 +103,8 @@ function findxy(res, e) {
     if (res == 'down') {
         prevX = currX;
         prevY = currY;
-        currX = e.clientX - canvas.offsetLeft;
-        currY = e.clientY - canvas.offsetTop;
+        currX = e.clientX + window.pageXOffset;
+        currY = e.clientY + window.pageYOffset;
 
         penDown = true;
     } else if (res == 'up' || res == "out") {
@@ -82,15 +112,15 @@ function findxy(res, e) {
     } else if (res == "in") {
         prevX = currX;
         prevY = currY;
-        currX = e.clientX - canvas.offsetLeft;
-        currY = e.clientY - canvas.offsetTop;
+        currX = e.clientX + window.pageXOffset;
+        currY = e.clientY + window.pageYOffset;
         penDown = e.buttons === 1;
     } else if (res == 'move') {
         if (penDown) {
             prevX = currX;
             prevY = currY;
-            currX = e.clientX - canvas.offsetLeft;
-            currY = e.clientY - canvas.offsetTop;
+            currX = e.clientX + window.pageXOffset;
+            currY = e.clientY + window.pageYOffset;
             draw();
         }
     }
