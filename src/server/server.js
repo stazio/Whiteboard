@@ -43,9 +43,9 @@ function onMessage(msg) {
         var res = [];
         for (var i in json) {
             var val = json[i];
-            if (json.action === "clear")
+            if (val.action === "clear")
                 res.push({"action" : "clear"});
-            else if (json.action === "line") {
+            else if (val.action === "line") {
                 if (isNaN(val.fromX) || isNaN(val.fromY) || isNaN(val.toX) || isNaN(val.toY) || isNaN(val.width) || typeof val.color !== "string")
                     break;
 
