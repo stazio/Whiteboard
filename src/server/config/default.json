@@ -1,0 +1,6 @@
+{
+  "ssl": {
+    "privkey" : "",
+    "certificate": ""
+  }
+}

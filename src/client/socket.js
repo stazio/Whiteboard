@@ -30,7 +30,7 @@ function process(val) {
 }
 
 function initWebsockets() {
-    ws = new WebSocket("ws://localhost:1234");
+    ws = new WebSocket("wss://staz.io:1234");
     ws.onmessage = function(data) {
         console.log(data);
         var val = JSON.parse(data.data);

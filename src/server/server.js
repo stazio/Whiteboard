@@ -1,6 +1,13 @@
 const WebSocket = require('ws');
+const fs = require('fs');
+const config = require('config');
 
-const wss = new WebSocket.Server({ port: 1234 });
+var server = require('https').createServer({
+    key: fs.readFileSync(config.get('ssl.privkey')),
+    cert: fs.readFileSync(config.get('ssl.certificate'))});
+server.listen(1234);
+
+const wss = new WebSocket.Server({ server: server });
 
 wss.on('connection', function connection(ws, request) {
     ws.on('message', onMessage);
