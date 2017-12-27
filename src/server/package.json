@@ -2,6 +2,7 @@
   "name": "server",
   "version": "0.0.1",
   "dependencies": {
-    "ws": "^3.3.3"
+    "ws": "^3.3.3",
+    "config" : "^1.29.0"
   }
 }
