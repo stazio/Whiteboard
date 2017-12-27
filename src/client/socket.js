@@ -30,7 +30,11 @@ function process(val) {
 }
 
 function initWebsockets() {
-    ws = new WebSocket("wss://staz.io:1234");
+
+    var ssl = location.protocol === "http:" ? "ws" : "wss";
+    var host = location.hostname;
+    var port = 1234;
+    ws = new WebSocket(ssl + "://" + host + ":" + port);
     ws.onmessage = function(data) {
         console.log(data);
         var val = JSON.parse(data.data);
