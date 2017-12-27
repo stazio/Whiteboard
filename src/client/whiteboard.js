@@ -8,6 +8,8 @@ var canvas, ctx,
 var color = "black",
     width = 2;
 
+var widthInput, heightInput;
+
 function setDimensions(width, height) {
     canvas.width = width;
     canvas.height = height;
@@ -19,6 +21,9 @@ function setDimensions(width, height) {
 
     drawLine(width, height, 0, height, "black");
     drawLine(width, height, width, 0, "black");
+
+    widthInput.value = width;
+    heightInput.value = height;
 }
 
 function initWhiteboard() {
@@ -47,7 +52,7 @@ function initWhiteboard() {
     }, false);
 
     var children = document.getElementById("buttons").children;
-    var widthInput, heightInput;
+
     for (var button in children) {
         children[button].onclick = function (ev) {
             var buttonVal = ev.target.name;
