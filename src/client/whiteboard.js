@@ -19,9 +19,6 @@ function setDimensions(width, height) {
     ctx.width = width;
     ctx.height = height;
 
-    drawLine(width, height, 0, height, "black");
-    drawLine(width, height, width, 0, "black");
-
     widthInput.value = width;
     heightInput.value = height;
 }
