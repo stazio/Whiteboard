@@ -1,7 +1,7 @@
 {
   "ssl": {
-    "enabled" : false,
-    "privkey" : "",
+    "enabled": false,
+    "privkey": "",
     "certificate": ""
   }
 }

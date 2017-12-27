@@ -4,28 +4,35 @@ const config = require('config');
 
 var server;
 if (config.get("ssl.enabled")) {
- server = require('https').createServer({
-    key: fs.readFileSync(config.get('ssl.privkey')),
-    cert: fs.readFileSync(config.get('ssl.certificate'))});
-server.listen(1234);
-}else {
-     server = require('http').createServer();
+    server = require('https').createServer({
+        key: fs.readFileSync(config.get('ssl.privkey')),
+        cert: fs.readFileSync(config.get('ssl.certificate'))
+    });
+    server.listen(1234);
+} else {
+    server = require('http').createServer();
     server.listen(1234);
 }
 
-const wss = new WebSocket.Server({ server: server });
+const wss = new WebSocket.Server({server: server});
 
 wss.on('connection', function connection(ws, request) {
     ws.on('message', onMessage);
 
     // Ping-Pong Heartbeat
     ws.isAlive = false;
-    ws.on('pong', function(){ws.isAlive = true;});
+    ws.on('pong', function () {
+        ws.isAlive = true;
+    });
     ws.ping('', false, true);
 
-    ws.on('error', function(){console.log("error!"); console.log(arguments);});
-    ws.on('close', function(){
-        console.log("Connection lost!");});
+    ws.on('error', function () {
+        console.log("error!");
+        console.log(arguments);
+    });
+    ws.on('close', function () {
+        console.log("Connection lost!");
+    });
 
     onConnect(ws, request);
 });
@@ -75,7 +82,7 @@ function onMessage(msg) {
         }
         wss.broadcast(JSON.stringify(res));
 
-    }else {
+    } else {
         if (json.action === "clear")
             wss.broadcast({"action": clear});
         else if (json.action === "line") {
@@ -96,8 +103,8 @@ function onMessage(msg) {
 
 
 // Ping-Pong Heartbeat
-const interval = setInterval(function() {
-    wss.clients.forEach(function(ws) {
+const interval = setInterval(function () {
+    wss.clients.forEach(function (ws) {
         if (ws.isAlive === false) {
             ws.terminate();
             console.log("Connection lost...");

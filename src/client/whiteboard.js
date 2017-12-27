@@ -1,4 +1,5 @@
-var canvas, ctx, penDown = false, beforeOutPenState = false,
+var canvas, ctx,
+    penDown = false,
     prevX = 0,
     currX = 0,
     prevY = 0,
@@ -11,8 +12,8 @@ function initWhiteboard() {
     canvas = document.getElementById('whiteboard');
 
     var computed = window.getComputedStyle(canvas);
-    canvas.width = parseInt(computed.width.substr(0, computed.width.length-2));
-    canvas.height = parseInt(computed.height.substr(0, computed.height.length-2));
+    canvas.width = parseInt(computed.width.substr(0, computed.width.length - 2));
+    canvas.height = parseInt(computed.height.substr(0, computed.height.length - 2));
     console.log(canvas.width, canvas.height);
 
     ctx = canvas.getContext("2d");
@@ -29,22 +30,19 @@ function initWhiteboard() {
     canvas.addEventListener("mouseout", function (e) {
         findxy('out', e)
     }, false);
-
     canvas.addEventListener("mouseover", function (e) {
-        console.log(e);
         findxy('in', e)
     }, false);
 
     var children = document.getElementById("buttons").children;
     for (var button in children) {
-        children[button].onclick = function(ev){
+        children[button].onclick = function (ev) {
             var buttonVal = ev.target.name;
             console.log(buttonVal);
             switch (buttonVal) {
                 case "clear":
                     clear();
                     break;
-                case "width": break;
                 default:
                     color = buttonVal;
                     break;
@@ -54,14 +52,6 @@ function initWhiteboard() {
 }
 
 function draw() {
-    // ctx.beginPath();
-    // ctx.moveTo(prevX, prevY);
-    // ctx.lineTo(currX, currY);
-    // ctx.strokeStyle = color;
-    // ctx.lineWidth = width;
-    // ctx.stroke();
-    // ctx.closePath();
-
     line(prevX, prevY, currX, currY, color);
 }
 
@@ -87,18 +77,15 @@ function findxy(res, e) {
         currY = e.clientY - canvas.offsetTop;
 
         penDown = true;
-    }else if (res == 'up' || res == "out") {
-        if (res == "out")
-            beforeOutPenState = penDown;
+    } else if (res == 'up' || res == "out") {
         penDown = false;
-    }else if (res == "in") {
-        console.log(e);
+    } else if (res == "in") {
         prevX = currX;
         prevY = currY;
         currX = e.clientX - canvas.offsetLeft;
         currY = e.clientY - canvas.offsetTop;
         penDown = e.buttons === 1;
-    }else if (res == 'move') {
+    } else if (res == 'move') {
         if (penDown) {
             prevX = currX;
             prevY = currY;
@@ -108,4 +95,5 @@ function findxy(res, e) {
         }
     }
 }
+
 initWhiteboard();
