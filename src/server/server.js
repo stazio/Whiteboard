@@ -57,7 +57,7 @@ function onMessage(msg) {
                 current_board = [];
             }
             else if (val.action === "line") {
-                if (isNaN(val.fromX) || isNaN(val.fromY) || isNaN(val.toX) || isNaN(val.toY) || isNaN(val.width) || typeof val.color !== "string")
+                if (isNaN(val.fromX) || isNaN(val.fromY) || isNaN(val.toX) || isNaN(val.toY) || typeof val.color !== "string")
                     break;
 
                 var map = {
@@ -66,7 +66,6 @@ function onMessage(msg) {
                     "fromY": val.fromY,
                     "toX": val.toX,
                     "toY": val.toY,
-                    "width": val.width,
                     "color": val.color
                 };
 
@@ -80,7 +79,7 @@ function onMessage(msg) {
         if (json.action === "clear")
             wss.broadcast({"action": clear});
         else if (json.action === "line") {
-            if (isNaN(json.fromX) || isNaN(json.fromY) || isNaN(json.toX) || isNaN(json.toY) || isNaN(json.width) || typeof json.color !== "string")
+            if (isNaN(json.fromX) || isNaN(json.fromY) || isNaN(json.toX) || isNaN(json.toY) || typeof json.color !== "string")
                 return;
 
             wss.broadcast(JSON.stringify({
@@ -89,7 +88,6 @@ function onMessage(msg) {
                 "fromY": json.fromY,
                 "toX": json.toX,
                 "toY": json.toY,
-                "width": json.width,
                 "color": json.color
             }));
         }

@@ -37,16 +37,18 @@ function initWhiteboard() {
     var children = document.getElementById("buttons").children;
     for (var button in children) {
         children[button].onclick = function(ev){
-            var buttonVal = ev.target.value;
+            var buttonVal = ev.target.name;
+            console.log(buttonVal);
             switch (buttonVal) {
                 case "clear":
                     clear();
                     break;
+                case "width": break;
                 default:
                     color = buttonVal;
+                    break;
             }
-
-        }
+        };
     }
 }
 
@@ -59,19 +61,19 @@ function draw() {
     // ctx.stroke();
     // ctx.closePath();
 
-    line(prevX, prevY, currX, currY, color, width);
+    line(prevX, prevY, currX, currY, color);
 }
 
 function clearScreen() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 
-function drawLine(startX, startY, endX, endY, color, width) {
+function drawLine(startX, startY, endX, endY, color) {
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
     ctx.strokeStyle = color;
-    ctx.lineWidth = width;
+    ctx.lineWidth = 2;
     ctx.stroke();
     ctx.closePath();
 }

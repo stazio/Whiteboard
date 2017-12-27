@@ -10,21 +10,20 @@ function clear() {
     queue({"action" : "clear"});
 }
 
-function line(fromX, fromY, toX, toY, color, width) {
+function line(fromX, fromY, toX, toY, color) {
     queue({
         "action" : "line",
         "fromX": fromX,
         "fromY": fromY,
         "toX": toX,
         "toY": toY,
-        "width" : width,
         "color": color
     });
 }
 
 function process(val) {
     if (val.action === "line")
-        drawLine(val.fromX, val.fromY, val.toX, val.toY, val.color, val.width);
+        drawLine(val.fromX, val.fromY, val.toX, val.toY, val.color);
     else if (val.action === "clear")
         clearScreen();
 }
