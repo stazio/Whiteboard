@@ -10,23 +10,69 @@ var whiteboard = new (function() {
 
         switch (state) {
             case "up":
-                this.ctx.stroke();
-                this.ctx.closePath();
-                this.isPathBeingDrawn = false;
+                this.latestAction = null;
                 break;
+
             case "down":
-                this.isPathBeingDrawn = true;
-                this.ctx.lineWidth = 2;
-                this.lastMouseX = newPos[0];
-                this.lastMouseY = newPos[1];
-                this.ctx.beginPath();
+                this.latestAction = {
+                    action: "path",
+                    width: 10,
+                    fill: "black",
+                    points: [newPos]
+                };
+                this.actions.push(this.latestAction);
                 break;
+
             case "move":
-                if (this.isPathBeingDrawn) {
-                    this.ctx.lineTo(newPos[0], newPos[1]);
-                    this.ctx.stroke();
+                if (this.latestAction) {
+                    this.latestAction.points.push(newPos);
+                    this.renderPage();
                 }
                 break;
+        }
+    };
+
+    // This function is based on Perfectionkills.com's exploring canvas drawing techniques tutorial!
+    this.renderPage = function() {
+
+        // Start by clearing the page
+        // TODO do we need double buffering? I haven't noticed, however doesn't mean it doesn't exist...
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (var actionI in this.actions) {
+            var action = this.actions[actionI];
+            switch (action.action) {
+                case "path":
+                    var width = action.width;
+                    var fill = action.fill;
+                    var points = action.points;
+
+                    this.ctx.beginPath();
+
+                    var pointA = points[0], pointB = points[1];
+                    for (var i = 0, len = points.length; i < len; i++) {
+                        var mid = [
+                            pointA[0] + (pointB[0] - pointA[0]) / 2,
+                            pointA[1] + (pointB[1] - pointA[1]) / 2
+                        ];
+
+                        this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+
+                        pointA = points[i];
+                        pointB = points[i+1];
+                    }
+
+                    this.ctx.lineJoin = this.ctx.lineCap = 'round';
+                    this.ctx.lineWidth = width;
+                    this.ctx.fillStyle = fill;
+                    this.ctx.stroke();
+                    this.ctx.closePath();
+                    break;
+
+                case "clear":
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                    break;
+            }
         }
     };
 
@@ -51,11 +97,9 @@ var whiteboard = new (function() {
         // Initialize Context
         this.ctx = this.canvas.getContext("2d");
 
-        // Intialize stuff for transformations
-        this.pathBeingDrawn = [];
-        this.isPathBeingDrawn = false;
-        this.lastMouseX = 0;
-        this.lastMouseY = 0;
+        // Intialize stuff for drawing
+        this.actions = [];
+        this.latestAction = null;
 
         // Initialize Mouse Events
 
