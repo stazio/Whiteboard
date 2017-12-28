@@ -9,23 +9,26 @@ var controller = new (function() {
             endPath: this.onEndPath
         });
 
-        this.socket = new Socket();
+        this.socket = new Socket({
+            onDraw: this.onIncomingPath
+        });
         this.socket.init();
     };
 
+    this.onIncomingPath = function(data) {
+        this.whiteboard.onAction(data);
+    };
+
     // Point Functions
-    this.onStartPath = function(color, width) {
-        this.latestPath = {
-            color: color,
-            width: width,
-            points: []
-        };
-        this.socket.newPath(this.latestPath);
+    this.onStartPath = function(fill, width) {
+        this.latestPath = this.socket.newDrawAction({
+            fill: fill,
+            width: width
+        });
     };
 
     this.onNewPoint = function(pos) {
         if (this.latestPath) {
-            this.latestPath.points.push(pos);
             this.socket.newPoint(this.latestPath, pos);
         }
     };

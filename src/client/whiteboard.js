@@ -1,5 +1,131 @@
+var paths = {};
+var queued = {};
+var activePath = null;
 
-function Whiteboard(){
+function Whiteboard() {
+    this.init = function() {
+        this.canvas = document.getElementById("canvas");
+        this.setup_canvas();
+        this.ctx = this.canvas.getContext("2d");
+        this.isMouseDown = false;
+        this.activePath = null;
+
+        this.setup_mouse();
+    };
+
+    this.setup_canvas = function() {
+        var computed = window.getComputedStyle(this.canvas);
+
+        var width = parseInt(computed.width.substr(0, computed.width.length - 2));
+        var height = parseInt(computed.height.substr(0, computed.height.length - 2));
+
+        this.canvas.width = width;
+        this.canvas.height = height;
+    };
+
+    this.setup_touch = function(){};//TODO
+    this.setup_mouse = function(){
+        var canvas = this.canvas;
+        var instance = this;
+
+        function onMouseStartPath(ev) {
+            instance.isMouseDown = true;
+            instance.createActivePath();
+            instance.appendActivePath(instance.getMousePos(ev.clientX, ev.clientY));
+        }
+        canvas.onmousedown = onMouseStartPath;
+        canvas.onmouseenter = function(ev) {
+            if (ev.button === 0)
+                onMouseStartPath(ev);
+        };
+
+        function onMouseEndPath(ev) {
+            instance.isMouseDown = false;
+            instance.endActivePath();
+        }
+        canvas.onmouseup = onMouseEndPath;
+        canvas.onmouseleave = onMouseEndPath;
+
+        canvas.onmousemove = function(ev) {
+            if (this.isMouseDown)
+                instance.appendActivePath(instance.getMousePos(ev.clientX, ev.clientY));
+        };
+    };
+
+    this.getMousePos = function(x, y) {
+        var rect = this.canvas.getBoundingClientRect();
+        return [x - rect.x , y - rect.y ];
+    };
+
+    this.createActivePath = function() {
+        this.activePath = {
+            id: null,
+            width: 10,
+            color: "black",
+            points: []
+        };
+    };
+
+    this.appendActivePath = function(pos) {
+        this.activePath.points.push(pos);
+    };
+
+    this.endActivePath = function() {
+        this.alertSocketChanges();
+        this.activePath = null;
+    };
+
+    this.updateOrCreatePath = function(id, fill, width, points) {
+        this.paths[id] = {
+            id: id,
+            fill: fill,
+            width: width,
+            points: points
+        }
+    };
+
+    this.appendPoints = function(id, points) {
+        this.paths[id].points = Array.concat(this.paths[id].points, points);
+    };
+
+    // This function is based on Perfectionkills.com's exploring canvas drawing techniques tutorial!
+    this.renderPaths = function(){
+        var ctx = this.ctx;
+        ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        for (var pathUUID in this.paths) {
+            if (this.paths.hasOwnProperty(pathUUID)) {
+                var path = this.paths[pathUUID];
+
+                var points = path.points;
+
+                this.ctx.beginPath();
+                var pointA = points[0], pointB = points[1];
+                for (var pointI = 0, len = points.length; pointI < len; pointI++) {
+                    // Anti-Aliasing I think?
+                    var mid = [
+                        pointA[0] + (pointB[0] - pointA[0]) / 2,
+                        pointA[1] + (pointB[1] - pointA[1]) / 2
+                    ];
+
+                    this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+
+                    pointA = points[pointI];
+                    pointB = points[pointI+1];
+                }
+
+                // Make sure that the lines are round and joined; not whatever the hell the other things were
+                this.ctx.lineJoin = this.ctx.lineCap = 'round';
+                this.ctx.lineWidth = path.width;
+                this.ctx.fillStyle = path.fill;
+                this.ctx.stroke();
+                this.ctx.closePath();
+            }
+        }
+    };
+}
+
+function Whiteboard_OLD(){
     // This function is based on Perfectionkills.com's exploring canvas drawing techniques tutorial!
     this.renderPage = function() {
 

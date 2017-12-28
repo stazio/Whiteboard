@@ -1,100 +1,80 @@
-var ws, wsReadyState = false;
-
-var queu = [];
-
-function queue(val) {
-    queu.push(val);
-}
-
-function clear() {
-    queue({"action": "clear"});
-}
-
-function line(fromX, fromY, toX, toY, color) {
-    queue({
-        "action": "line",
-        "fromX": fromX,
-        "fromY": fromY,
-        "toX": toX,
-        "toY": toY,
-        "color": color
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
     });
 }
+var Socket = function() {
 
-function newSize(width, height) {
-    queue({
-        "action": "dimensions",
-        "width": width,
-        "height": height
-    });
-}
-
-function process(val) {
-    if (val.action === "line")
-        drawLine(val.fromX, val.fromY, val.toX, val.toY, val.color);
-    else if (val.action === "clear")
-        clearScreen();
-    else if (val.action === "dimensions")
-        setDimensions(val.width, val.height);
-}
-
-function initWebsockets() {
-
-    var ssl = location.protocol === "http:" ? "ws" : "wss";
-    var host = location.hostname;
-    var port = 1234;
-    ws = new WebSocket(ssl + "://" + host + ":" + port);
-    ws.onmessage = function (data) {
-        if (wsReadyState = false && ws.readyState === ws.OPEN){wsReadyState = true; domConnected();}
-        console.log(data);
-        var val = JSON.parse(data.data);
-        if (Array.isArray(val)) {
-            for (var i in val) {
-                process(val[i]);
-            }
-        } else
-            process(val);
+    this.process = function(data) {
+        if (data.action === "draw")
+            this.eventDict.draw(data.drawData);
     };
 
-    ws.onopen = function () {
-        if (ws.readyState === ws.OPEN){domConnected();}
-            wsReadyState = true;
-    };
-    ws.onclose = function () {
-        wsReadyState = false;
-    };
-    ws.onerror = function () {
-        console.log("error!");
-        console.log(arguments);
-        checkState();
+    this.newPath = function(path) {
+        this.enqueue({
+            action : "path",
+            path : path,
+            pathUUID: this.pathUUID = uuidv4()
+        });
     };
 
-    function checkState() {
-        if (ws.readyState === ws.CLOSING || ws.readyState === ws.CLOSED)
-            domDisconnect();
-    }
+    this.newPoint = function(path, newPoint) {
+        this.enqueue({
+            action: "point",
+            pathID: path,
+            point: newPoint
+        });
+    };
 
-    setInterval(function () {
-        if (queu.length > 0) {
-            ws.send(JSON.stringify(queu));
-            checkState();
-            queu = [];
-        }
-    }, 50);
-}
+    /**
+     *
+     * @param eventDict dict of the following functions onDraw({action, color, fill, points});
+     */
+    this.init = function(eventDict) {
 
-function domDisconnect(err) {
-    document.getElementById("loading").style.display = "none";
+        var instance  = this;
+        this.eventDict = eventDict;
+        this.pathUUID = null;
 
-    document.getElementById("error").style.display = "inherit";
-    if (err)
-        document.getElementById("error").innerHTML = err;
-    document.getElementById("buttons").style.display = "none";
-}
-function domConnected() {
-    document.getElementById("loading").style.display = "none";
-}
+        // Find host
+            var ssl = location.protocol === "http:" ? "ws" : "wss";
+            var host = location.hostname;
+            var port = 1234;
 
-initWebsockets();
+            // create socket
+            var ws = this.ws = new WebSocket(ssl + "://" + host + ":" + port);
 
+            ws.onmessage = function (data) {
+                if (instance.isWSReady = false && ws.readyState === ws.OPEN){instance.wsReadyState = true;}
+                console.log(data);
+                var val = JSON.parse(data.data);
+                if (Array.isArray(val)) {
+                    for (var i in val) {
+                        instance.process(val[i]);
+                    }
+                } else
+                    instance.process(val);
+            };
 
+            ws.onopen = function () {
+                if (ws.readyState === ws.OPEN){
+                instance.wsReadyState = true;}
+            };
+            ws.onclose = function () {
+                instance.wsReadyState = false;
+            };
+            ws.onerror = function () {
+                console.log("error!");
+                console.log(arguments);
+                if (ws.readyState === ws.CLOSING || ws.readyState === ws.CLOSED)instance.wsReadyState = false;
+            };
+
+            setInterval(function () {
+                if (instance.queue.length > 0) {
+                    instance.ws.send(JSON.stringify(instance.queue));
+                    instance.queue = [];
+                }
+            }, 50);
+        };
+    };
