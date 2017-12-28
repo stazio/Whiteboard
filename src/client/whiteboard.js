@@ -1,37 +1,5 @@
 
-var whiteboard = new (function() {
-
-    /**
-     * Any state change
-     * @param state string one of the following: up, down, leave, enter, move
-     * @param newPos Array the new position of [mouseX, mouseY] relative to canvas
-     */
-    this.onMouseStateChange = function(state, newPos) {
-
-        switch (state) {
-            case "up":
-                this.latestAction = null;
-                break;
-
-            case "down":
-                this.latestAction = {
-                    action: "path",
-                    width: 10,
-                    fill: "black",
-                    points: [newPos]
-                };
-                this.actions.push(this.latestAction);
-                break;
-
-            case "move":
-                if (this.latestAction) {
-                    this.latestAction.points.push(newPos);
-                    this.renderPage();
-                }
-                break;
-        }
-    };
-
+function Whiteboard(){
     // This function is based on Perfectionkills.com's exploring canvas drawing techniques tutorial!
     this.renderPage = function() {
 
@@ -76,12 +44,11 @@ var whiteboard = new (function() {
         }
     };
 
-    this.transformMouse = function(pageX, pageY) {
-        var rect = this.canvas.getBoundingClientRect();
-        return [pageX - rect.x , pageY - rect.y ];
-    };
-
-    this.init = function() {
+    /**
+     *
+     * @param onNewPoint an object with the following functions: startPath(color, width), newPoint(pos), endPath
+     */
+    this.init = function(onNewPoint) {
         var instance = this;
 
         this.canvas = document.getElementById("whiteboard");
@@ -99,7 +66,7 @@ var whiteboard = new (function() {
 
         // Intialize stuff for drawing
         this.actions = [];
-        this.latestAction = null;
+        this.pointFunctions = onNewPoint;
 
         // Initialize Mouse Events
 
@@ -122,7 +89,51 @@ var whiteboard = new (function() {
         this.canvas.onmousemove = function(e){
             instance.onMouseStateChange("move", instance.transformMouse(e.clientX,  e.clientY));
         };
-    }
-});
+    };
 
-whiteboard.init();
+    this.onAction = function(action) {
+        switch (action.action) {
+            case "path":
+                this.actions.push({
+                    action: "path",
+                    fill: action.fill,
+                    width: action.width,
+                    points: action.points
+                });
+                break;
+
+            case "clear":
+                this.actions = [];
+                break;
+        }
+    };
+
+    /**
+     * Any state change
+     * @param state string one of the following: up, down, leave, enter, move
+     * @param pos Array the new position of [mouseX, mouseY] relative to canvas
+     */
+    this.onMouseState = function(state, pos) {
+        switch (state) {
+            case "up":
+                this.pointFunctions.endPath();
+                break;
+
+            case "down":
+                this.pointFunctions.startPath("black", 10);
+                this.pointFunctions.newPoint(pos);
+                break;
+
+            case "move":
+                if (this.latestAction) {
+                    this.pointFunctions.newPoint(pos);
+                }
+                break;
+        }
+    };
+
+    this.transformMouse = function(pageX, pageY) {
+        var rect = this.canvas.getBoundingClientRect();
+        return [pageX - rect.x , pageY - rect.y ];
+    };
+}
