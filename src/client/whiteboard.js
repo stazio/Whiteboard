@@ -1,131 +1,81 @@
-var canvas, ctx,
-    penDown = false,
-    prevX = 0,
-    currX = 0,
-    prevY = 0,
-    currY = 0;
 
-var color = "black",
-    width = 2;
+var whiteboard = new (function() {
 
-var widthInput, heightInput;
+    /**
+     * Any state change
+     * @param state string one of the following: up, down, leave, enter, move
+     * @param newPos Array the new position of [mouseX, mouseY] relative to canvas
+     */
+    this.onMouseStateChange = function(state, newPos) {
+        console.log(state);
+        console.log(newPos);
 
-function setDimensions(width, height) {
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.width = width + "px";
-    canvas.style.height = height + "px";
+        switch (state) {
+            case "up":
+                this.ctx.stroke();
+                this.ctx.closePath();
+                this.isPathBeingDrawn = false;
+                break;
+            case "down":
+                this.isPathBeingDrawn = true;
+                this.ctx.lineWidth = 25;
+                this.lastMouseX = newPos[0];
+                this.lastMouseY = newPos[1];
+                this.ctx.beginPath();
+                break;
+            case "move":
+                if (this.isPathBeingDrawn) {
+                    this.ctx.lineTo(newPos[0], newPos[1]);
+                    this.ctx.stroke();
+                }
+                break;
+        }
+    };
 
-    ctx.width = width;
-    ctx.height = height;
+    this.transformMouse = function(pageX, pageY) {
+        var rect = this.canvas.getBoundingClientRect();
+        return [pageX - rect.x, pageY - rect.y];
+    };
 
-    widthInput.value = width;
-    heightInput.value = height;
-}
+    this.init = function() {
+        var instance = this;
 
-function initWhiteboard() {
-    canvas = document.getElementById('whiteboard');
+        this.canvas = document.getElementById("whiteboard");
+        // TODO Do a real implementation
+        this.canvas.width = this.canvas.().width;
+        this.canvas.height = this.canvas.getBoundingClientRect().height;
 
-    //var computed = window.getComputedStyle(canvas);
-    //canvas.width = parseInt(computed.width.substr(0, computed.width.length - 2));
-    //canvas.height = parseInt(computed.height.substr(0, computed.height.length - 2));
+        // Initialize Context
+        this.ctx = this.canvas.getContext("2d");
 
-    ctx = canvas.getContext("2d");
+        // Intialize stuff for transformations
+        this.pathBeingDrawn = [];
+        this.isPathBeingDrawn = false;
+        this.lastMouseX = 0;
+        this.lastMouseY = 0;
 
-    canvas.addEventListener("mousemove", function (e) {
-        findxy('move', e)
-    }, false);
-    canvas.addEventListener("mousedown", function (e) {
-        findxy('down', e)
-    }, false);
-    canvas.addEventListener("mouseup", function (e) {
-        findxy('up', e)
-    }, false);
-    canvas.addEventListener("mouseout", function (e) {
-        findxy('out', e)
-    }, false);
-    canvas.addEventListener("mouseover", function (e) {
-        findxy('in', e)
-    }, false);
+        // Initialize Mouse Events
 
-    var children = document.getElementById("buttons").children;
-
-    for (var button in children) {
-        children[button].onclick = function (ev) {
-            var buttonVal = ev.target.name;
-            switch (buttonVal) {
-                case "clear":
-                    clear();
-                    break;
-                default:
-                    color = buttonVal;
-                    break;
-            }
+        this.canvas.onmousedown = function(e){
+            instance.onMouseStateChange("down", instance.transformMouse(e.pageX,  e.pageY));
         };
 
-        if (children[button].name === "width")
-            widthInput = children[button];
+        this.canvas.onmouseup = function(e){
+            instance.onMouseStateChange("up", instance.transformMouse(e.pageX, e.pageY));
+        };
 
-        if (children[button].name === "height")
-            heightInput = children[button];
+        this.canvas.onmouseleave = function(e){
+            instance.onMouseStateChange("leave", instance.transformMouse(e.pageX, e.pageY));
+        };
+
+        this.canvas.onmouseenter = function(e){
+            instance.onMouseStateChange("enter", instance.transformMouse(e.pageX, e.pageY));
+        };
+
+        this.canvas.onmousemove = function(e){
+            instance.onMouseStateChange("move", instance.transformMouse(e.pageX, e.pageY));
+        };
     }
-    widthInput.addEventListener("change", function (e) {
-        var val = parseInt(widthInput.value.trim());
-        if (!isNaN(val))
-            newSize(val, heightInput.value);
-        widthInput.value = val;
-    });
-    heightInput.addEventListener("change", function (e) {
-        var val = parseInt(heightInput.value.trim());
-        if (!isNaN(val))
-            newSize(widthInput.value, val);
-        heightInput.value = val;
-    });
-}
+});
 
-function draw() {
-    line(prevX, prevY, currX, currY, color);
-}
-
-function clearScreen() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function drawLine(startX, startY, endX, endY, color) {
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.closePath();
-}
-
-function findxy(res, e) {
-    if (res == 'down') {
-        prevX = currX;
-        prevY = currY;
-        currX = e.clientX + window.pageXOffset;
-        currY = e.clientY + window.pageYOffset;
-
-        penDown = true;
-    } else if (res == 'up' || res == "out") {
-        penDown = false;
-    } else if (res == "in") {
-        prevX = currX;
-        prevY = currY;
-        currX = e.clientX + window.pageXOffset;
-        currY = e.clientY + window.pageYOffset;
-        penDown = e.buttons === 1;
-    } else if (res == 'move') {
-        if (penDown) {
-            prevX = currX;
-            prevY = currY;
-            currX = e.clientX + window.pageXOffset;
-            currY = e.clientY + window.pageYOffset;
-            draw();
-        }
-    }
-}
-
-initWhiteboard();
+whiteboard.init();
