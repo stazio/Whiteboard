@@ -52,7 +52,12 @@ function onConnect(client, request) {
     client.send(JSON.stringify(current_board));
 }
 
-var current_board = [{"action": "dimensions", "width": 1366, "height": 768}];
+var current_board;
+if (fs.existsSync("storage.json"))
+    current_board = JSON.parse(fs.readFileSync("storage.json"));
+else
+    current_board = [{"action": "dimensions", "width": 1366, "height": 768}];
+
 
 function onMessage(msg, ws) {
     var json = JSON.parse(msg);
@@ -104,7 +109,7 @@ function onMessage(msg, ws) {
 
 
 // Ping-Pong Heartbeat
-const interval = setInterval(function () {
+const pingPongInterval = setInterval(function () {
     wss.clients.forEach(function (ws) {
         if (ws.isAlive === false) {
             ws.terminate();
@@ -115,3 +120,8 @@ const interval = setInterval(function () {
         ws.ping('', false, true);
     });
 }, 1000 * 30); // 30 seconds
+
+// File Saving Interval
+const fileSaveInterval = setInterval(function() {
+    fs.writeFile("storage.json", JSON.stringify(current_board), function(err){if (err) {console.log("File saving error!"); console.log(err);}});
+}, 1000 * 10); // 10 seconds
