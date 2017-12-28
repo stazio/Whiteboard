@@ -49,14 +49,14 @@ function initWhiteboard() {
         findxy('in', e)
     }, false);
 
-    canvas.addEventListener("touchstart", function(e) {
+    canvas.addEventListener("touchstart", function (e) {
         if (e.touches.length === 1)
             findxy("down", e.touches[0]);
         else if (penDown)
             findxy("up", null);
     });
 
-    canvas.addEventListener("touchend", function(e) {
+    canvas.addEventListener("touchend", function (e) {
         if (e.touches.length === 1)
             findxy("down", e.touches[0]);
         else if (penDown)
@@ -107,7 +107,7 @@ function initWhiteboard() {
     //     heightInput.value = val;
     // });
 
-    lineWidthInput.addEventListener("change", function(e) {
+    lineWidthInput.addEventListener("change", function (e) {
         width = e.target.value;
     });
     lineWidthInput.value = width;

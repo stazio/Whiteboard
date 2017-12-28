@@ -45,7 +45,10 @@ function initWebsockets() {
     var port = 1234;
     ws = new WebSocket(ssl + "://" + host + ":" + port);
     ws.onmessage = function (data) {
-        if (wsReadyState = false && ws.readyState === ws.OPEN){wsReadyState = true; domConnected();}
+        if (wsReadyState = false && ws.readyState === ws.OPEN) {
+            wsReadyState = true;
+            domConnected();
+        }
         console.log(data);
         var val = JSON.parse(data.data);
         if (Array.isArray(val)) {
@@ -57,8 +60,10 @@ function initWebsockets() {
     };
 
     ws.onopen = function () {
-        if (ws.readyState === ws.OPEN){domConnected();}
-            wsReadyState = true;
+        if (ws.readyState === ws.OPEN) {
+            domConnected();
+        }
+        wsReadyState = true;
     };
     ws.onclose = function () {
         wsReadyState = false;
@@ -91,6 +96,7 @@ function domDisconnect(err) {
         document.getElementById("error").innerHTML = err;
     document.getElementById("buttons").style.display = "none";
 }
+
 function domConnected() {
     document.getElementById("loading").style.display = "none";
 }
