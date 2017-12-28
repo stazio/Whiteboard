@@ -54,7 +54,7 @@ function onConnect(client, request) {
 
 var current_board;
 if (fs.existsSync("config/storage.json"))
-    current_board = JSON.parse(fs.readFileSync("storage.json"));
+    current_board = JSON.parse(fs.readFileSync("config/storage.json"));
 else
     current_board = [{"action": "dimensions", "width": 1366, "height": 768}];
 
