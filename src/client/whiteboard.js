@@ -20,8 +20,8 @@ function setDimensions(width, height) {
     ctx.width = width;
     ctx.height = height;
 
-    widthInput.value = width;
-    heightInput.value = height;
+    //widthInput.value = width;
+    //heightInput.value = height;
 }
 
 function initWhiteboard() {
@@ -48,6 +48,27 @@ function initWhiteboard() {
     canvas.addEventListener("mouseover", function (e) {
         findxy('in', e)
     }, false);
+
+    canvas.addEventListener("touchstart", function(e) {
+        if (e.touches.length === 1)
+            findxy("down", e.touches[0]);
+        else if (penDown)
+            findxy("up", null);
+    });
+
+    canvas.addEventListener("touchend", function(e) {
+        if (e.touches.length === 1)
+            findxy("down", e.touches[0]);
+        else if (penDown)
+            findxy("up", null);
+    });
+
+    canvas.addEventListener("touchmove", function (e) {
+        if (e.touches.length === 1) {
+            findxy("move", e.touches[0]);
+            e.preventDefault();
+        }
+    });
 
     var children = document.getElementById("buttons").children;
 
@@ -116,7 +137,7 @@ function findxy(res, e) {
         prevX = currX;
         prevY = currY;
         currX = e.clientX + window.pageXOffset;
-        currY = e.clientY + window.pageYOffset;
+        currY = e.clientY + window.pageYOffset - canvas.offsetTop;
 
         penDown = true;
     } else if (res == 'up' || res == "out") {
@@ -125,14 +146,14 @@ function findxy(res, e) {
         prevX = currX;
         prevY = currY;
         currX = e.clientX + window.pageXOffset;
-        currY = e.clientY + window.pageYOffset;
+        currY = e.clientY + window.pageYOffset - canvas.offsetTop;
         penDown = e.buttons === 1;
     } else if (res == 'move') {
         if (penDown) {
             prevX = currX;
             prevY = currY;
             currX = e.clientX + window.pageXOffset;
-            currY = e.clientY + window.pageYOffset;
+            currY = e.clientY + window.pageYOffset - canvas.offsetTop;
             draw();
         }
     }

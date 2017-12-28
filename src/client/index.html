@@ -3,6 +3,7 @@
 <head>
     <title>White Board</title>
     <style>
+
         #whiteboard {
 
             width: 100%;
@@ -16,10 +17,10 @@
         }
 
         #buttons {
-            position: fixed;
             z-index: 1;
             margin: 0;
             padding: 0;
+            width: 100%;
         }
 
         body {
@@ -37,7 +38,15 @@
         }
 
         #error {
-            display: none;}
+            display: none;
+        }
+
+        @media all and (max-device-width: 768px) {
+            #buttons * {
+                font-size: 5em;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -49,7 +58,8 @@
         <button name="green" style="color:green;">Green</button>
         <button name="blue" style="color:blue;">Blue</button>
         <button name="yellow" style="color:yellow;">Yellow</button>
-        Line Width: <input type="range" name="linewidth" max="25" min="2">
+        <span style="white-space: nowrap">
+        Line Width: <input type="range" name="linewidth" max="25" min="2"></span>
         <!--Width: <input name="width"> Height: <input name="height">-->
     </div>
     <div id="error">An error has occurred.</div>
