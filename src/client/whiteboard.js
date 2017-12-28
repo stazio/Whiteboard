@@ -9,6 +9,7 @@ var color = "black",
     width = 2;
 
 var widthInput, heightInput;
+var lineWidthInput;
 
 function setDimensions(width, height) {
     canvas.width = width;
@@ -68,19 +69,27 @@ function initWhiteboard() {
 
         if (children[button].name === "height")
             heightInput = children[button];
+
+        if (children[button].name === "linewidth")
+            lineWidthInput = children[button];
     }
-    widthInput.addEventListener("change", function (e) {
-        var val = parseInt(widthInput.value.trim());
-        if (!isNaN(val))
-            newSize(val, heightInput.value);
-        widthInput.value = val;
+    // widthInput.addEventListener("change", function (e) {
+    //     var val = parseInt(widthInput.value.trim());
+    //     if (!isNaN(val))
+    //         newSize(val, heightInput.value);
+    //     widthInput.value = val;
+    // });
+    // heightInput.addEventListener("change", function (e) {
+    //     var val = parseInt(heightInput.value.trim());
+    //     if (!isNaN(val))
+    //         newSize(widthInput.value, val);
+    //     heightInput.value = val;
+    // });
+
+    lineWidthInput.addEventListener("change", function(e) {
+        width = e.target.value;
     });
-    heightInput.addEventListener("change", function (e) {
-        var val = parseInt(heightInput.value.trim());
-        if (!isNaN(val))
-            newSize(widthInput.value, val);
-        heightInput.value = val;
-    });
+    lineWidthInput.value = width;
 }
 
 function draw() {
@@ -96,7 +105,8 @@ function drawLine(startX, startY, endX, endY, color) {
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = width;
+    ctx.lineJoin = ctx.lineCap = "round";
     ctx.stroke();
     ctx.closePath();
 }
