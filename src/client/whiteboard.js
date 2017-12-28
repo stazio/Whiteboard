@@ -7,8 +7,6 @@ var whiteboard = new (function() {
      * @param newPos Array the new position of [mouseX, mouseY] relative to canvas
      */
     this.onMouseStateChange = function(state, newPos) {
-        console.log(state);
-        console.log(newPos);
 
         switch (state) {
             case "up":
@@ -18,7 +16,7 @@ var whiteboard = new (function() {
                 break;
             case "down":
                 this.isPathBeingDrawn = true;
-                this.ctx.lineWidth = 25;
+                this.ctx.lineWidth = 2;
                 this.lastMouseX = newPos[0];
                 this.lastMouseY = newPos[1];
                 this.ctx.beginPath();
@@ -34,16 +32,21 @@ var whiteboard = new (function() {
 
     this.transformMouse = function(pageX, pageY) {
         var rect = this.canvas.getBoundingClientRect();
-        return [pageX - rect.x, pageY - rect.y];
+        return [pageX - rect.x , pageY - rect.y ];
     };
 
     this.init = function() {
         var instance = this;
 
         this.canvas = document.getElementById("whiteboard");
-        // TODO Do a real implementation
-        this.canvas.width = this.canvas.().width;
-        this.canvas.height = this.canvas.getBoundingClientRect().height;
+
+        var computed = window.getComputedStyle(this.canvas);
+
+        var width = parseInt(computed.width.substr(0, computed.width.length - 2));
+        var height = parseInt(computed.height.substr(0, computed.height.length - 2));
+
+        this.canvas.width = width;
+        this.canvas.height = height;
 
         // Initialize Context
         this.ctx = this.canvas.getContext("2d");
@@ -57,23 +60,23 @@ var whiteboard = new (function() {
         // Initialize Mouse Events
 
         this.canvas.onmousedown = function(e){
-            instance.onMouseStateChange("down", instance.transformMouse(e.pageX,  e.pageY));
+            instance.onMouseStateChange("down", instance.transformMouse(e.clientX,  e.clientY));
         };
 
         this.canvas.onmouseup = function(e){
-            instance.onMouseStateChange("up", instance.transformMouse(e.pageX, e.pageY));
+            instance.onMouseStateChange("up", instance.transformMouse(e.clientX,  e.clientY));
         };
 
         this.canvas.onmouseleave = function(e){
-            instance.onMouseStateChange("leave", instance.transformMouse(e.pageX, e.pageY));
+            instance.onMouseStateChange("leave", instance.transformMouse(e.clientX,  e.clientY));
         };
 
         this.canvas.onmouseenter = function(e){
-            instance.onMouseStateChange("enter", instance.transformMouse(e.pageX, e.pageY));
+            instance.onMouseStateChange("enter", instance.transformMouse(e.clientX,  e.clientY));
         };
 
         this.canvas.onmousemove = function(e){
-            instance.onMouseStateChange("move", instance.transformMouse(e.pageX, e.pageY));
+            instance.onMouseStateChange("move", instance.transformMouse(e.clientX,  e.clientY));
         };
     }
 });
