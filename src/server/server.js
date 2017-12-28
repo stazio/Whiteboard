@@ -52,7 +52,7 @@ function onConnect(client, request) {
     client.send(JSON.stringify(current_board));
 }
 
-var current_board = [{"action": "dimensions", "width": 1000, "height": 1000}];
+var current_board = [{"action": "dimensions", "width": 1366, "height": 768}];
 
 function onMessage(msg, ws) {
     var json = JSON.parse(msg);
