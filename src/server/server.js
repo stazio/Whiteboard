@@ -53,7 +53,7 @@ function onConnect(client, request) {
 }
 
 var current_board;
-if (fs.existsSync("storage.json"))
+if (fs.existsSync("config/storage.json"))
     current_board = JSON.parse(fs.readFileSync("storage.json"));
 else
     current_board = [{"action": "dimensions", "width": 1366, "height": 768}];
@@ -123,5 +123,5 @@ const pingPongInterval = setInterval(function () {
 
 // File Saving Interval
 const fileSaveInterval = setInterval(function() {
-    fs.writeFile("storage.json", JSON.stringify(current_board), function(err){if (err) {console.log("File saving error!"); console.log(err);}});
+    fs.writeFile("config/storage.json", JSON.stringify(current_board), function(err){if (err) {console.log("File saving error!"); console.log(err);}});
 }, 1000 * 10); // 10 seconds
