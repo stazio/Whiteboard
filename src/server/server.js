@@ -1,9 +1,13 @@
+var fs = require('fs');
+var WebSocket = require('ws');
+
 var ws = create_server(1234, false);
 var room = {};
 var nextPathID = 1;
 
 ws.on('connection', function(client, request){
-    console.log("NEW CLIENT!");
+    client.request = request;
+    console.log("[" + client.request.connection.remoteAddress + "]: joined");
 
     client.on('message', function (text) {
         var json = JSON.parse(text);
@@ -29,7 +33,22 @@ ws.on('connection', function(client, request){
             }
         }
     });
+
+    client.on('close', function() {
+        console.log("[" + client.request.connection.remoteAddress + "]: left");
+    });
+
+    client.on('error', function(errno, code) {
+        console.log("[" + client.request.connection.remoteAddress + "]: has had an error. " + "Error Code: " + code);
+    });
+
+    client.on('pong', function(){client.isAlive = true});
 });
+
+function clientErr(client, error) {
+    if (error)
+        console.log("[" + client.request.connection.remoteAddress + "]: had an error while sending a message! Error: " + error);
+}
 
 function process_path(client, path) {
     if (path === "END") {
@@ -52,12 +71,12 @@ function process_path(client, path) {
 
 function sendExcept(clientt, pathID, path) {
     ws.clients.forEach(function each(client) {
-        if (client !== clientt) {//TODO
+        if (client !== clientt && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
                 "type" : "path",
                 "id" : pathID,
                 "path" : path
-            }));
+            }), function(err){clientErr(client, err);});
         }
     });
 }
@@ -72,7 +91,6 @@ function sendExcept(clientt, pathID, path) {
  */
 function create_server(port, ssl, privkey, certificate) {
     var server;
-    var fs = require('fs');
     if (ssl) {
         server = require('https').createServer({
             key: fs.readFileSync(privkey),
@@ -84,14 +102,25 @@ function create_server(port, ssl, privkey, certificate) {
         server.listen(port);
     }
 
-    var ws = require('ws');
-    return new ws.Server({server: server});
+    return new WebSocket.Server({server: server});
 }
 
 function broadcast(data) {
     ws.clients.forEach(function each(client) {
-        if (true || client.readyState === ws.OPEN) {//TODO
-            client.send(JSON.stringify(data));
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(data), function(err){clientErr(client, err);});
         }
     });
 }
+
+setInterval(function () {
+    ws.clients.forEach(function(conn) {
+       if (conn.isAlive === false) {
+           console.log("[" + conn.request.connection.remoteAddress + "]: timed out");
+           conn.terminate();
+       }
+
+       conn.isAlive = false;
+       conn.ping('', false, true);
+    });
+}, 10 * 1000); // 10 seconds
