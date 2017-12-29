@@ -144,7 +144,7 @@ setInterval(function () {
 }, 10 * 1000); // 10 seconds
 
 setInterval(function () {
-    fs.writeFile("config/storage.json", JSON.stringify(room), function(err) {
+    fs.writeFile("config/storage.json", JSON.stringify(room), function (err) {
         if (err)
             console.log("Failed to save room state! Error: " + err);
     });
