@@ -1,106 +1,58 @@
-var ws, wsReadyState = false;
+var ws = create_socket();
+var room = new Room(0, 0);
 
-var queu = [];
-
-function queue(val) {
-    queu.push(val);
+var queue = [];
+function send(data) {
+    if (Array.isArray(data))
+        queue = Array.concat(queue, data);
+    else {
+        queue.push(data);
+    }
 }
 
-function clear() {
-    queue({"action": "clear"});
-}
+ws.onmessage = function(e) {
+    var str = e.data;
+    var data = JSON.parse(str);
+    for (var i in data) {
+        if (data.hasOwnProperty(i)) {
+            var json = data[i];
+            switch (json.action) {
+                case "append_path_points":
+                    room.append_path_points(json.id, json.points);
+                    render();
+                    break;
+                case "new_path":
+                    room.add(parse_path(json.path));
+                    render();
+                    break;
+                case "new_dimensions":
+                    room.new_dimensions(json.width, json.height);
+                    new_dims();
+                    render();
+                    break;
+                case "clear":
+                    room.clear();
+                    render();
+                    break;
+            }
+        }
+    }
+};
 
-function line(fromX, fromY, toX, toY, color) {
-    queue({
-        "action": "line",
-        "fromX": fromX,
-        "fromY": fromY,
-        "toX": toX,
-        "toY": toY,
-        "color": color
-    });
-}
-
-function newSize(width, height) {
-    queue({
-        "action": "dimensions",
-        "width": width,
-        "height": height
-    });
-}
-
-function process(val) {
-    if (val.action === "line")
-        drawLine(val.fromX, val.fromY, val.toX, val.toY, val.color);
-    else if (val.action === "clear")
-        clearScreen();
-    else if (val.action === "dimensions")
-        setDimensions(val.width, val.height);
-}
-
-function initWebsockets() {
-
+function create_socket() {
+// Find host
     var ssl = location.protocol === "http:" ? "ws" : "wss";
     var host = location.hostname;
     var port = 1234;
-    ws = new WebSocket(ssl + "://" + host + ":" + port);
-    ws.onmessage = function (data) {
-        if (wsReadyState = false && ws.readyState === ws.OPEN) {
-            wsReadyState = true;
-            domConnected();
-        }
-        console.log(data);
-        var val = JSON.parse(data.data);
-        if (Array.isArray(val)) {
-            for (var i in val) {
-                process(val[i]);
-            }
-        } else
-            process(val);
-    };
+// create socket
+  var ws= new WebSocket(ssl + "://" + host + ":" + port);
 
-    ws.onopen = function () {
-        if (ws.readyState === ws.OPEN) {
-            domConnected();
-        }
-        wsReadyState = true;
-    };
-    ws.onclose = function () {
-        wsReadyState = false;
-    };
-    ws.onerror = function () {
-        console.log("error!");
-        console.log(arguments);
-        checkState();
-    };
-
-    function checkState() {
-        if (ws.readyState === ws.CLOSING || ws.readyState === ws.CLOSED)
-            domDisconnect();
+setInterval(function() {
+    if (queue && ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify(queue));
+        queue = [];
     }
+}, 50); // every 50 mills send an update to the server with a new queue
 
-    setInterval(function () {
-        if (queu.length > 0) {
-            ws.send(JSON.stringify(queu));
-            checkState();
-            queu = [];
-        }
-    }, 50);
+return ws;
 }
-
-function domDisconnect(err) {
-    document.getElementById("loading").style.display = "none";
-
-    document.getElementById("error").style.display = "inherit";
-    if (err)
-        document.getElementById("error").innerHTML = err;
-    document.getElementById("buttons").style.display = "none";
-}
-
-function domConnected() {
-    document.getElementById("loading").style.display = "none";
-}
-
-initWebsockets();
-
-

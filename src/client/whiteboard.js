@@ -1,17 +1,90 @@
-var canvas, ctx,
-    penDown = false,
-    prevX = 0,
-    currX = 0,
-    prevY = 0,
-    currY = 0;
+function setup_canvas() {
+    var canvas = document.getElementById("whiteboard");
+    canvas.wdith = 1000;
+    canvas.height = 1000;
+    return canvas;
+}
 
-var color = "black",
-    width = 2;
+function setup_mouse() {
+    canvas.onmousedown = function(e) {
+        var currX = e.clientX + window.pageXOffset,
+        currY = e.clientY + window.pageYOffset - canvas.offsetTop;
+        new_path(currX, currY);
+    };
 
-var widthInput, heightInput;
-var lineWidthInput;
+    canvas.onmouseup = function(e) {
+        end_path();
+    };
 
-function setDimensions(width, height) {
+    canvas.onmousemove = function(e) {
+        var currX = e.clientX + window.pageXOffset,
+            currY = e.clientY + window.pageYOffset - canvas.offsetTop;
+        append_path(currX, currY);
+    }
+}
+
+function new_path(x, y) {
+    activePath = randomUUID();
+    send(Messages.NEW_PATH(new Path(activePath, 20, "black", [[x, y]])));
+}
+
+function end_path() {
+    activePath = null;
+}
+
+function append_path(x, y) {
+    if (activePath) {
+        send(Messages.APPEND_PATH(activePath, [x,y]));
+    }
+}
+
+
+var canvas = setup_canvas();
+var ctx = canvas.getContext("2d");
+var activePath = null;
+
+setup_mouse();
+
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    var paths = room.paths;
+    for (var id in paths) {
+        if (paths.hasOwnProperty(id)) {
+            var path = paths[id];
+            var points = path.points;
+            this.ctx.beginPath();
+
+            if (points && points.length > 1) {
+                var pointA = points[0], pointB = points[1];
+                for (var i = 0, len = points.length; i < len; i++) {
+                    var mid = [
+                        pointA[0] + (pointB[0] - pointA[0]) / 2,
+                        pointA[1] + (pointB[1] - pointA[1]) / 2
+                    ];
+
+                    this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+
+                    pointA = points[i];
+                    pointB = points[i + 1];
+                    if (!pointA || !pointB)
+                        break;
+                }
+            }
+
+            this.ctx.lineJoin = this.ctx.lineCap = 'round';
+            this.ctx.lineWidth = path.width;
+            this.ctx.fillStyle = path.fill;
+            this.ctx.stroke();
+            this.ctx.closePath();
+        }
+    }
+}
+
+function new_dims() {
+    var width = room.width;
+    var height = room.height;
     canvas.width = width;
     canvas.height = height;
     canvas.style.width = width + "px";
@@ -20,143 +93,145 @@ function setDimensions(width, height) {
     ctx.width = width;
     ctx.height = height;
 
-    //widthInput.value = width;
-    //heightInput.value = height;
 }
 
-function initWhiteboard() {
-    canvas = document.getElementById('whiteboard');
+function Whiteboard_OLD(){
+    // This function is based on Perfectionkills.com's exploring canvas drawing techniques tutorial!
+    this.renderPage = function() {
 
-    //var computed = window.getComputedStyle(canvas);
-    //canvas.width = parseInt(computed.width.substr(0, computed.width.length - 2));
-    //canvas.height = parseInt(computed.height.substr(0, computed.height.length - 2));
+        // Start by clearing the page
+        // TODO do we need double buffering? I haven't noticed, however doesn't mean it doesn't exist...
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    ctx = canvas.getContext("2d");
+        for (var actionI in this.actions) {
+            var action = this.actions[actionI];
+            switch (action.action) {
+                case "path":
+                    var width = action.width;
+                    var fill = action.fill;
+                    var points = action.points;
 
-    canvas.addEventListener("mousemove", function (e) {
-        findxy('move', e)
-    }, false);
-    canvas.addEventListener("mousedown", function (e) {
-        findxy('down', e)
-    }, false);
-    canvas.addEventListener("mouseup", function (e) {
-        findxy('up', e)
-    }, false);
-    canvas.addEventListener("mouseout", function (e) {
-        findxy('out', e)
-    }, false);
-    canvas.addEventListener("mouseover", function (e) {
-        findxy('in', e)
-    }, false);
+                    this.ctx.beginPath();
 
-    canvas.addEventListener("touchstart", function (e) {
-        if (e.touches.length === 1)
-            findxy("down", e.touches[0]);
-        else if (penDown)
-            findxy("up", null);
-    });
+                    var pointA = points[0], pointB = points[1];
+                    for (var i = 0, len = points.length; i < len; i++) {
+                        var mid = [
+                            pointA[0] + (pointB[0] - pointA[0]) / 2,
+                            pointA[1] + (pointB[1] - pointA[1]) / 2
+                        ];
 
-    canvas.addEventListener("touchend", function (e) {
-        if (e.touches.length === 1)
-            findxy("down", e.touches[0]);
-        else if (penDown)
-            findxy("up", null);
-    });
+                        this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
 
-    canvas.addEventListener("touchmove", function (e) {
-        if (e.touches.length === 1) {
-            findxy("move", e.touches[0]);
-            e.preventDefault();
-        }
-    });
+                        pointA = points[i];
+                        pointB = points[i+1];
+                    }
 
-    var children = document.getElementById("buttons").children;
+                    this.ctx.lineJoin = this.ctx.lineCap = 'round';
+                    this.ctx.lineWidth = width;
+                    this.ctx.fillStyle = fill;
+                    this.ctx.stroke();
+                    this.ctx.closePath();
 
-    for (var button in children) {
-        children[button].onclick = function (ev) {
-            var buttonVal = ev.target.name;
-            switch (buttonVal) {
-                case "clear":
-                    clear();
                     break;
-                default:
-                    color = buttonVal;
+
+                case "clear":
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                     break;
             }
+        }
+    };
+
+    /**
+     *
+     * @param onNewPoint an object with the following functions: startPath(color, width), newPoint(pos), endPath
+     */
+    this.init = function(onNewPoint) {
+        var instance = this;
+
+        this.canvas = document.getElementById("whiteboard");
+
+
+        var computed = window.getComputedStyle(this.canvas);
+
+        var width = parseInt(computed.width.substr(0, computed.width.length - 2));
+        var height = parseInt(computed.height.substr(0, computed.height.length - 2));
+
+        this.canvas.width = width;
+        this.canvas.height = height;
+
+        // Initialize Context
+        this.ctx = this.canvas.getContext("2d");
+
+        // Intialize stuff for drawing
+        this.actions = [];
+        this.pointFunctions = onNewPoint;
+
+        // Initialize Mouse Events
+
+        this.canvas.onmousedown = function(e){
+            instance.onMouseStateChange("down", instance.transformMouse(e.clientX,  e.clientY));
         };
 
-        if (children[button].name === "width")
-            widthInput = children[button];
+        this.canvas.onmouseup = function(e){
+            instance.onMouseStateChange("up", instance.transformMouse(e.clientX,  e.clientY));
+        };
 
-        if (children[button].name === "height")
-            heightInput = children[button];
+        this.canvas.onmouseleave = function(e){
+            instance.onMouseStateChange("leave", instance.transformMouse(e.clientX,  e.clientY));
+        };
 
-        if (children[button].name === "linewidth")
-            lineWidthInput = children[button];
-    }
-    // widthInput.addEventListener("change", function (e) {
-    //     var val = parseInt(widthInput.value.trim());
-    //     if (!isNaN(val))
-    //         newSize(val, heightInput.value);
-    //     widthInput.value = val;
-    // });
-    // heightInput.addEventListener("change", function (e) {
-    //     var val = parseInt(heightInput.value.trim());
-    //     if (!isNaN(val))
-    //         newSize(widthInput.value, val);
-    //     heightInput.value = val;
-    // });
+        this.canvas.onmouseenter = function(e){
+            instance.onMouseStateChange("enter", instance.transformMouse(e.clientX,  e.clientY));
+        };
 
-    lineWidthInput.addEventListener("change", function (e) {
-        width = e.target.value;
-    });
-    lineWidthInput.value = width;
-}
+        this.canvas.onmousemove = function(e){
+            instance.onMouseStateChange("move", instance.transformMouse(e.clientX,  e.clientY));
+        };
+    };
 
-function draw() {
-    line(prevX, prevY, currX, currY, color);
-}
+    this.onAction = function(action) {
+        switch (action.action) {
+            case "path":
+                this.actions.push({
+                    action: "path",
+                    fill: action.fill,
+                    width: action.width,
+                    points: action.points
+                });
+                break;
 
-function clearScreen() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-}
-
-function drawLine(startX, startY, endX, endY, color) {
-    ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.lineJoin = ctx.lineCap = "round";
-    ctx.stroke();
-    ctx.closePath();
-}
-
-function findxy(res, e) {
-    if (res == 'down') {
-        prevX = currX;
-        prevY = currY;
-        currX = e.clientX + window.pageXOffset;
-        currY = e.clientY + window.pageYOffset - canvas.offsetTop;
-
-        penDown = true;
-    } else if (res == 'up' || res == "out") {
-        penDown = false;
-    } else if (res == "in") {
-        prevX = currX;
-        prevY = currY;
-        currX = e.clientX + window.pageXOffset;
-        currY = e.clientY + window.pageYOffset - canvas.offsetTop;
-        penDown = e.buttons === 1;
-    } else if (res == 'move') {
-        if (penDown) {
-            prevX = currX;
-            prevY = currY;
-            currX = e.clientX + window.pageXOffset;
-            currY = e.clientY + window.pageYOffset - canvas.offsetTop;
-            draw();
+            case "clear":
+                this.actions = [];
+                break;
         }
-    }
-}
+    };
 
-initWhiteboard();
+    /**
+     * Any state change
+     * @param state string one of the following: up, down, leave, enter, move
+     * @param pos Array the new position of [mouseX, mouseY] relative to canvas
+     */
+    this.onMouseState = function(state, pos) {
+        switch (state) {
+            case "up":
+                this.pointFunctions.endPath();
+                break;
+
+            case "down":
+                this.pointFunctions.startPath("black", 10);
+                this.pointFunctions.newPoint(pos);
+                break;
+
+            case "move":
+                if (this.latestAction) {
+                    this.pointFunctions.newPoint(pos);
+                }
+                break;
+        }
+    };
+
+    this.transformMouse = function(pageX, pageY) {
+        var rect = this.canvas.getBoundingClientRect();
+        return [pageX - rect.x , pageY - rect.y ];
+    };
+}
