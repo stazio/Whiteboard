@@ -1,237 +1,220 @@
+var canvas, ctx;
+var isDrawing = null;
+var width = 9, fill = "red";
+
+// Initialization
+canvas = setup_canvas();
+ctx = setup_context();
+setup_paths_array();
+setup_mouse_touch();
+setup_buttons();
+
+// Functions to set stuff up. It's nicer to have them be functions
 function setup_canvas() {
     var canvas = document.getElementById("whiteboard");
-    canvas.wdith = 1000;
-    canvas.height = 1000;
+
+    // Let's use the precomputed CSS styles for the canvas, to figure out what the size should be.
+    // FOR SOME REASON it can't make the assumption itself.
+    var computed = window.getComputedStyle(canvas);
+    // getComputedStyle.width returns "0px" which needs to be turned into a number.
+    var width = parseInt(computed.width.substr(0, computed.width.length - 2));
+    var height = parseInt(computed.height.substr(0, computed.height.length - 2));
+
+    canvas.width = width;
+    canvas.height = height;
     return canvas;
 }
 
-function setup_mouse() {
-    canvas.onmousedown = function(e) {
-        var currX = e.clientX + window.pageXOffset,
-        currY = e.clientY + window.pageYOffset - canvas.offsetTop;
-        new_path(currX, currY);
-    };
+function setup_context() {
+    var context = canvas.getContext("2d");
 
-    canvas.onmouseup = function(e) {
-        end_path();
-    };
+    // This needs to exist because (FOR SOME REASON) the canvas doesn't tell the context what the bounds are.
+    // However getComputedStyle.width returns "0px" which needs to be turned into a number.
+    context.width = parseInt(window.getComputedStyle(canvas).width.substr(-2));
+    context.height = parseInt(window.getComputedStyle(canvas).height.substr(-2));
 
-    canvas.onmousemove = function(e) {
-        var currX = e.clientX + window.pageXOffset,
-            currY = e.clientY + window.pageYOffset - canvas.offsetTop;
-        append_path(currX, currY);
+    return context;
+}
+
+function setup_paths_array() {
+    ctx.paths = [[]];
+}
+
+function setup_buttons() {
+    for (var i in document.getElementById("buttons").children) {
+        if (document.getElementById("buttons").children[i].name === "color") {
+            document.getElementById("buttons").children[i].onclick = function (e) {
+                fill = e.target.value;
+            }
+        }
     }
+    document.getElementsByName("width")[0].onclick = function (e) {
+        width = e.target.value;
+    };
+    document.getElementsByName("width")[0].value = width;
+
+    document.getElementsByName("clear")[0].onclick = function () {
+        message({type: "clear"})
+    };
 }
 
-function new_path(x, y) {
-    activePath = randomUUID();
-    send(Messages.NEW_PATH(new Path(activePath, 20, "black", [[x, y]])));
-}
+function setup_mouse_touch() {
 
-function end_path() {
-    activePath = null;
-}
+    function onMouseDown(e) {
+        var pos = get_mouse_pos(e);
 
-function append_path(x, y) {
-    if (activePath) {
-        send(Messages.APPEND_PATH(activePath, [x,y]));
+        isDrawing = true;
+        ctx.paths[0].push(width + ";" + fill);
+        ctx.paths[0].push(pos);
+        message({
+            "type": "path",
+            "paths": [
+                width + ";" + fill,
+                pos
+            ]
+        });
     }
+
+
+    function onMouseUp(e) {
+        ctx.paths[0].push("END");
+        message({
+            "type": "path",
+            "path": "END"
+        });
+        isDrawing = false;
+        render();
+    }
+
+
+    function onMouseMove(e) {
+        if (isDrawing) {
+            var pos = get_mouse_pos(e);
+            ctx.paths[0].push(pos);
+            message({
+                "type": "path",
+                "path": pos
+            });
+            render();
+        }
+    }
+
+    canvas.onmousedown = onMouseDown;
+    canvas.onmouseup = onMouseUp;
+    canvas.onmousemove = onMouseMove;
+
+
+    canvas.addEventListener('touchstart', function (e) {
+        if (isDrawing && e.touches.length !== 1)
+            onMouseUp(e);
+        else if (e.touches.length === 1)
+            onMouseDown(e.touches[0]);
+    });
+
+
+    canvas.addEventListener('touchend', function (e) {
+        if (isDrawing && e.touches.length !== 1)
+            onMouseUp(e);
+        else if (e.touches.length === 1)
+            onMouseDown(e.touches[0]);
+    });
+
+
+    canvas.addEventListener('touchmove', function (e) {
+        if (e.touches.length === 1) {
+            e.preventDefault();
+            onMouseMove(e.touches[0]);
+        }
+    });
 }
 
+/** This function takes an event (which contains clientX/clientY) and turns it into accurate x,y poisitons for the mouse*/
+function get_mouse_pos(e) {
+    return [
+        e.clientX + window.pageXOffset,
+        e.clientY + window.pageYOffset - canvas.offsetTop
+    ];
+}
 
-var canvas = setup_canvas();
-var ctx = canvas.getContext("2d");
-var activePath = null;
-
-setup_mouse();
-
+/**This makes the screen empty. IT DOES NOT alert the server to clearing the screen.*/
+function clear_screen() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    setup_paths_array();
+}
 
 function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var paths = ctx.paths;
+    var deletes = [];
 
-    var paths = room.paths;
-    for (var id in paths) {
-        if (paths.hasOwnProperty(id)) {
-            var path = paths[id];
-            var points = path.points;
-            this.ctx.beginPath();
+    var i;
+    for (i in paths) {
+        if (paths.hasOwnProperty(i)) {
+            var group = paths[i];
 
-            if (points && points.length > 1) {
-                var pointA = points[0], pointB = points[1];
-                for (var i = 0, len = points.length; i < len; i++) {
+            // TODO why do I need this?
+            ctx.beginPath();
+            for (var ii = 0, len = group.length; ii <= len; ii++) {
+                var pointA = group[ii], pointB = group[ii + 1];
+
+                if (Array.isArray(pointA) && Array.isArray(pointB)) {
+                    // I wrote this a while ago and forgot why it is how it is.
+                    // Somewhere in the history of this git, there is a link to the code I based this on.
+                    // TODO proper credits!
                     var mid = [
                         pointA[0] + (pointB[0] - pointA[0]) / 2,
                         pointA[1] + (pointB[1] - pointA[1]) / 2
                     ];
 
-                    this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
 
-                    pointA = points[i];
-                    pointB = points[i + 1];
-                    if (!pointA || !pointB)
-                        break;
+                    ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+                }
+
+                // There should be no point in time where there is more info after an END.
+                // Therefore we can delete the entire path if we see it.
+                else if (pointA === "END" || pointB === "END")
+                    deletes.push(i);
+
+                // From this point on, the code is awful, I know.
+                // However, this code deals with the beginning of a point.
+                // But this is the end of the loop you say? Yes, because fuck legibility, also else if's are nice.
+                else if ((pointB && pointB.split) || (pointA && pointA.split)) {
+                    // If we can split the string using pointB, then do it.
+                    var split = (pointB && pointB.split) ? pointB.split(";") : null;
+                    // Where we able to do the previous? And is it the proper splitting?
+                    if (split === null || split.length !== 2)
+                    // No you say? Well then we need to split with A.
+                        split = (pointA && pointA.split) ? pointA.split(";") : null;
+
+                    // Try the previous, again.
+                    if (split && split.length == 2) {
+                        // Ah yes! This is the beginning of a new path!!!
+                        // So let's close the path's. This is because there may be an unfinished path someone is drawing.
+                        ctx.stroke();
+                        ctx.closePath(); // Not necessary, however pretty.
+
+                        ctx.beginPath();
+
+                        ctx.lineJoin = ctx.lineCap = 'round'; // This ensures that are lines are connected... and have a nice tip....
+
+                        ctx.lineWidth = split[0];
+                        ctx.strokeStyle = split[1];
+                    }// TODO Maybe there should be something here? Who knows how this code even works...
                 }
             }
 
-            this.ctx.lineJoin = this.ctx.lineCap = 'round';
-            this.ctx.lineWidth = path.width;
-            this.ctx.fillStyle = path.fill;
-            this.ctx.stroke();
-            this.ctx.closePath();
+            // Just in case
+            ctx.stroke();
+            ctx.closePath();
         }
     }
-}
 
-function new_dims() {
-    var width = room.width;
-    var height = room.height;
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.width = width + "px";
-    canvas.style.height = height + "px";
-
-    ctx.width = width;
-    ctx.height = height;
-
-}
-
-function Whiteboard_OLD(){
-    // This function is based on Perfectionkills.com's exploring canvas drawing techniques tutorial!
-    this.renderPage = function() {
-
-        // Start by clearing the page
-        // TODO do we need double buffering? I haven't noticed, however doesn't mean it doesn't exist...
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        for (var actionI in this.actions) {
-            var action = this.actions[actionI];
-            switch (action.action) {
-                case "path":
-                    var width = action.width;
-                    var fill = action.fill;
-                    var points = action.points;
-
-                    this.ctx.beginPath();
-
-                    var pointA = points[0], pointB = points[1];
-                    for (var i = 0, len = points.length; i < len; i++) {
-                        var mid = [
-                            pointA[0] + (pointB[0] - pointA[0]) / 2,
-                            pointA[1] + (pointB[1] - pointA[1]) / 2
-                        ];
-
-                        this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
-
-                        pointA = points[i];
-                        pointB = points[i+1];
-                    }
-
-                    this.ctx.lineJoin = this.ctx.lineCap = 'round';
-                    this.ctx.lineWidth = width;
-                    this.ctx.fillStyle = fill;
-                    this.ctx.stroke();
-                    this.ctx.closePath();
-
-                    break;
-
-                case "clear":
-                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                    break;
-            }
-        }
-    };
-
-    /**
-     *
-     * @param onNewPoint an object with the following functions: startPath(color, width), newPoint(pos), endPath
-     */
-    this.init = function(onNewPoint) {
-        var instance = this;
-
-        this.canvas = document.getElementById("whiteboard");
-
-
-        var computed = window.getComputedStyle(this.canvas);
-
-        var width = parseInt(computed.width.substr(0, computed.width.length - 2));
-        var height = parseInt(computed.height.substr(0, computed.height.length - 2));
-
-        this.canvas.width = width;
-        this.canvas.height = height;
-
-        // Initialize Context
-        this.ctx = this.canvas.getContext("2d");
-
-        // Intialize stuff for drawing
-        this.actions = [];
-        this.pointFunctions = onNewPoint;
-
-        // Initialize Mouse Events
-
-        this.canvas.onmousedown = function(e){
-            instance.onMouseStateChange("down", instance.transformMouse(e.clientX,  e.clientY));
-        };
-
-        this.canvas.onmouseup = function(e){
-            instance.onMouseStateChange("up", instance.transformMouse(e.clientX,  e.clientY));
-        };
-
-        this.canvas.onmouseleave = function(e){
-            instance.onMouseStateChange("leave", instance.transformMouse(e.clientX,  e.clientY));
-        };
-
-        this.canvas.onmouseenter = function(e){
-            instance.onMouseStateChange("enter", instance.transformMouse(e.clientX,  e.clientY));
-        };
-
-        this.canvas.onmousemove = function(e){
-            instance.onMouseStateChange("move", instance.transformMouse(e.clientX,  e.clientY));
-        };
-    };
-
-    this.onAction = function(action) {
-        switch (action.action) {
-            case "path":
-                this.actions.push({
-                    action: "path",
-                    fill: action.fill,
-                    width: action.width,
-                    points: action.points
-                });
-                break;
-
-            case "clear":
-                this.actions = [];
-                break;
-        }
-    };
-
-    /**
-     * Any state change
-     * @param state string one of the following: up, down, leave, enter, move
-     * @param pos Array the new position of [mouseX, mouseY] relative to canvas
-     */
-    this.onMouseState = function(state, pos) {
-        switch (state) {
-            case "up":
-                this.pointFunctions.endPath();
-                break;
-
-            case "down":
-                this.pointFunctions.startPath("black", 10);
-                this.pointFunctions.newPoint(pos);
-                break;
-
-            case "move":
-                if (this.latestAction) {
-                    this.pointFunctions.newPoint(pos);
-                }
-                break;
-        }
-    };
-
-    this.transformMouse = function(pageX, pageY) {
-        var rect = this.canvas.getBoundingClientRect();
-        return [pageX - rect.x , pageY - rect.y ];
-    };
+    // We know there are certain paths we do not need.
+    // Let's keep ourselves from re-drawing unnecessary lines
+    // Also memory management!
+    for (i in deletes) {
+        if (deletes[i] != 0 && ctx.paths[deletes[i]])
+            delete ctx.paths[deletes[i]];
+        // if (!ctx.paths[0])
+        //     ctx.paths[0] = [];
+    }
 }
