@@ -1,80 +1,58 @@
-function uuidv4() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
+var ws = create_socket();
+var room = new Room(0, 0);
+
+var queue = [];
+function send(data) {
+    if (Array.isArray(data))
+        queue = Array.concat(queue, data);
+    else {
+        queue.push(data);
+    }
 }
-var Socket = function() {
 
-    this.process = function(data) {
-        if (data.action === "draw")
-            this.eventDict.draw(data.drawData);
-    };
+ws.onmessage = function(e) {
+    var str = e.data;
+    var data = JSON.parse(str);
+    for (var i in data) {
+        if (data.hasOwnProperty(i)) {
+            var json = data[i];
+            switch (json.action) {
+                case "append_path_points":
+                    room.append_path_points(json.id, json.points);
+                    render();
+                    break;
+                case "new_path":
+                    room.add(parse_path(json.path));
+                    render();
+                    break;
+                case "new_dimensions":
+                    room.new_dimensions(json.width, json.height);
+                    new_dims();
+                    render();
+                    break;
+                case "clear":
+                    room.clear();
+                    render();
+                    break;
+            }
+        }
+    }
+};
 
-    this.newPath = function(path) {
-        this.enqueue({
-            action : "path",
-            path : path,
-            pathUUID: this.pathUUID = uuidv4()
-        });
-    };
+function create_socket() {
+// Find host
+    var ssl = location.protocol === "http:" ? "ws" : "wss";
+    var host = location.hostname;
+    var port = 1234;
+// create socket
+  var ws= new WebSocket(ssl + "://" + host + ":" + port);
 
-    this.newPoint = function(path, newPoint) {
-        this.enqueue({
-            action: "point",
-            pathID: path,
-            point: newPoint
-        });
-    };
+setInterval(function() {
+    if (queue && ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify(queue));
+        queue = [];
+    }
+}, 50); // every 50 mills send an update to the server with a new queue
 
-    /**
-     *
-     * @param eventDict dict of the following functions onDraw({action, color, fill, points});
-     */
-    this.init = function(eventDict) {
-
-        var instance  = this;
-        this.eventDict = eventDict;
-        this.pathUUID = null;
-
-        // Find host
-            var ssl = location.protocol === "http:" ? "ws" : "wss";
-            var host = location.hostname;
-            var port = 1234;
-
-            // create socket
-            var ws = this.ws = new WebSocket(ssl + "://" + host + ":" + port);
-
-            ws.onmessage = function (data) {
-                if (instance.isWSReady = false && ws.readyState === ws.OPEN){instance.wsReadyState = true;}
-                console.log(data);
-                var val = JSON.parse(data.data);
-                if (Array.isArray(val)) {
-                    for (var i in val) {
-                        instance.process(val[i]);
-                    }
-                } else
-                    instance.process(val);
-            };
-
-            ws.onopen = function () {
-                if (ws.readyState === ws.OPEN){
-                instance.wsReadyState = true;}
-            };
-            ws.onclose = function () {
-                instance.wsReadyState = false;
-            };
-            ws.onerror = function () {
-                console.log("error!");
-                console.log(arguments);
-                if (ws.readyState === ws.CLOSING || ws.readyState === ws.CLOSED)instance.wsReadyState = false;
-            };
-
-            setInterval(function () {
-                if (instance.queue.length > 0) {
-                    instance.ws.send(JSON.stringify(instance.queue));
-                    instance.queue = [];
-                }
-            }, 50);
-        };
-    };
+return ws;
+}

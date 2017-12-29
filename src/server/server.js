@@ -1,115 +1,38 @@
 eval(require('fs').readFileSync('../common/Messages.js', "utf8"));
 var ws = create_server(1234, false);
-var room = new Room(1000, 1000);
+var room = new Room(1000, 1000, broadcast);
+
 
 ws.on('connection', function(client, request){
     console.log("NEW CLIENT!");
     client.send(JSON.stringify(room.turn_to_messages()));
 
     client.on('message', function (text) {
-        var data = JSON.parse(text);
-        switch (data.action) {
-            case "append_path_points":
-                var id = data.id;
-                room.append_path_points(id, data.points);
-                break;
+        var json = JSON.parse(text);
+        for (var i in json) {
+            if (json.hasOwnProperty(i)) {
+                var data = json[i];
+                switch (data.action) {
+                    case "append_path_points":
+                        var id = data.id;
+                        room.append_path_points(id, data.points);
+                        break;
 
-            case "new_path":
-                room.add(parse_path(data.path));
-            break;
+                    case "new_path":
+                        room.add(parse_path(data.path));
+                        break;
 
-            case "new_dimensions": break;
+                    case "new_dimensions":
+                        break;
 
-            case "clear":
-                room.clear();
-                break;
+                    case "clear":
+                        room.clear();
+                        break;
+                }
+            }
         }
     });
 });
-
-function Room(width, height) {
-    this.width = width;
-    this.height = height;
-    /**
-     *
-     * @type {Path}
-     */
-    this.paths = {};
-
-    this.append_path_points = function(id, points) {
-        if (this.paths.hasOwnProperty(id))
-            this.paths[id].append(points);
-        broadcast(Messages.APPEND_PATH(id, points));
-    };
-
-    this.turn_to_messages = function() {
-        var messages = [
-            Messages.NEW_DIMENSIONS(this.width, this.height)
-        ];
-        for (var id in this.paths) {
-            if (this.paths.hasOwnProperty(id))
-                messages.push(Messages.NEW_PATH(this.paths[id]));
-        }
-        return messages;
-    };
-
-    this.add = function(path) {
-        this.paths[path.id] = path;
-        broadcast(Messages.NEW_PATH(path));
-    };
-
-    this.clear = function() {
-        this.paths = {};
-        broadcast(Messages.CLEAR());
-    }
-}
-
-function Path(id, width, fill, points) {
-    this.id = id;
-    this.width = width;
-    this.fill = fill;
-    this.points = points;
-
-    this.to_dictionary = function() {
-        return {
-            id: this.id,
-            width: this.width,
-            fill: this.fill,
-            points: this.points
-        };
-    };
-
-    this.append = function(points) {
-        this.points = this.points.concat(points);
-    };
-}
-
-/**
- *
- * @param json object
- * @returns Path|boolean
- */
-function parse_path(json) {
-
-    // Make sure everything is real!
-    if (!json.hasOwnProperty("id") || isNaN(json.width) || !json.hasOwnProperty("fill") || !Array.isArray(json.points)) {
-        console.log("first");
-        return false;
-    }
-
-    // Make sure each point is real!
-    for (var i in json.points) {
-        if (json.points.hasOwnProperty(i)) {
-            if (!Array.isArray(json.points[i]) || isNaN(json.points[i][0]) || isNaN(json.points[i][1])) {
-
-                console.log(i + " second");
-                return false;
-            }
-        }
-    }
-
-    return new Path(json.id, json.width, json.fill, json.points);
-}
 
 // Important stuff
 /**
