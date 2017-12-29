@@ -1,45 +1,66 @@
-eval(require('fs').readFileSync('../common/Messages.js', "utf8"));
 var ws = create_server(1234, false);
-var room = new Room(1000, 1000, broadcast);
+var room = {};
+var nextPathID = 1;
 
 ws.on('connection', function(client, request){
     console.log("NEW CLIENT!");
-    client.send(JSON.stringify(room.turn_to_messages()));
 
     client.on('message', function (text) {
         var json = JSON.parse(text);
         for (var i in json) {
             if (json.hasOwnProperty(i)) {
                 var data = json[i];
-                switch (data.action) {
-                    case "append_path_points":
-                        var id = data.id;
-                        room.append_path_points(id, data.points);
+                switch (data.type) {
+                    case "path":
+                        if (data.path)
+                            process_path(client, data.path);
+                        if (data.paths) {
+                            for (var ii in data.paths) {
+                                if (data.paths.hasOwnProperty(ii))
+                                    process_path(client, data.paths[ii]);
+                            }
+                        }
                         break;
-
-                    case "new_path":
-                        room.add(parse_path(data.path));
-                        break;
-
-                    case "new_dimensions":
-                        break;
-
                     case "clear":
-                        room.clear();
-                        break;
-
-                    case "end_path":
-                        var id = data.id;
-                        if (room.paths[id] && room.paths[id].points <= 1)
-                            delete room.paths[id];
-                        broadcast(Messages.END_PATH(id));
+                        broadcast( {"type": "clear"});
+                        room = {};
                         break;
                 }
             }
         }
-        console.log(Object.keys(room.paths).length);
     });
 });
+
+function process_path(client, path) {
+    if (path === "END") {
+        if (room[client.activePathID]) {
+            room[client.activePathID].push(path);
+            sendExcept(client, client.activePathID, path);
+        }
+        client.activePathID = null;
+    }else if (typeof path === "string") {
+        client.activePathID = nextPathID++;
+        room[client.activePathID] = [path];
+        sendExcept(client, client.activePathID, path);
+    }else {
+        if (room[client.activePathID]) {
+            room[client.activePathID].push(path);
+            sendExcept(client, client.activePathID, path);
+        }
+    }
+}
+
+function sendExcept(clientt, pathID, path) {
+    ws.clients.forEach(function each(client) {
+        if (client !== clientt) {//TODO
+            client.send(JSON.stringify({
+                "type" : "path",
+                "id" : pathID,
+                "path" : path
+            }));
+        }
+    });
+}
 
 // Important stuff
 /**
@@ -68,16 +89,9 @@ function create_server(port, ssl, privkey, certificate) {
 }
 
 function broadcast(data) {
-    if (typeof data !== "string") {
-        if (Array.isArray(data))
-            data = JSON.stringify(data);
-        else
-            data = JSON.stringify([data]);
-    }
-
     ws.clients.forEach(function each(client) {
         if (true || client.readyState === ws.OPEN) {//TODO
-            client.send(data);
+            client.send(JSON.stringify(data));
         }
     });
 }

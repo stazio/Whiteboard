@@ -54,18 +54,18 @@
 
     <div id="buttons">
         <button name="clear">Clear</button>
-        <button name="black" style="color:black;">Black</button>
-        <button name="red" style="color:red;">Red</button>
-        <button name="green" style="color:green;">Green</button>
-        <button name="blue" style="color:blue;">Blue</button>
-        <button name="yellow" style="color:yellow;">Yellow</button>
-        Width: <input name="width"> Height: <input name="height">
+        <button value="black" name="color" style="color:black;">Black</button>
+        <button name="color" value="red" style="color:red;">Red</button>
+        <button name="color" value="green" style="color:green;">Green</button>
+        <button name="color" value="blue" style="color:blue;">Blue</button>
+        <button name="color" value="yellow" style="color:yellow;">Yellow</button>
+        Width: <input type="range" max="35" min="2" name="width">
     </div>
     <div id="error">An error has occurred.</div>
     <!--<div id="loading">Connecting...</div>-->
     <canvas id="whiteboard"></canvas>
 
-    <script src="Messages.js"></script>
+    <!--<script src="Messages.js"></script>-->
     <script src="socket.js"></script>
     <script src="whiteboard.js"></script>
 
