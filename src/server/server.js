@@ -1,7 +1,8 @@
 var fs = require('fs');
 var WebSocket = require('ws');
+var config = require('config');
 
-var ws = create_server(1234, false);
+var ws = create_server(1234, config.get('ssl.enabled'), config.get('ssl.privkey'), config.get('ssl.certificate'));
 var room = {};
 var nextPathID = 1;
 
