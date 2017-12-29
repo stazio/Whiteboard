@@ -1,0 +1,7 @@
+{
+  "ssl": {
+    "enabled": true,
+    "privkey": "key.pem",
+    "certificate": "cert.pem"
+  }
+}

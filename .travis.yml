@@ -13,7 +13,6 @@ env:
 before_install:
   - cd src/server
   - mv config/storage-test.json config/storage.json
-  - cp config/default-example.json config/default.json
+  - if [ $USE_SSL == "true" ]; then cp config/default-ssl.json config/default.json; else config/default-example.json config/default.json; fi
 
-  - 'if [ $USE_SSL == "true" ]; then echo \'{"ssl": {"enabled": true, "privkey": "key.pem", "certificate": "cert.pem"}}\' > config/default.json; fi'
-  - 'if [ $USE_SSL == "true" ]; then openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 100 -nodes -batch; fi'
+  - if [ $USE_SSL == "true" ]; then openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 100 -nodes -batch; fi
