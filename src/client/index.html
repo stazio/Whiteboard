@@ -3,6 +3,7 @@
 <head>
     <title>White Board</title>
     <style>
+
         #whiteboard {
 
             width: 100%;
@@ -13,13 +14,14 @@
             margin: 0;
             padding: 0;
             border-right: 1px black solid;
+            border-bottom: 1px black solid;
         }
 
         #buttons {
-            position: fixed;
             z-index: 1;
             margin: 0;
             padding: 0;
+            width: 100%;
         }
 
         body {
@@ -37,7 +39,15 @@
         }
 
         #error {
-            display: none;}
+            display: none;
+        }
+
+        @media all and (max-device-width: 768px) {
+            #buttons * {
+                font-size: 5em;
+            }
+        }
+
     </style>
 </head>
 <body>

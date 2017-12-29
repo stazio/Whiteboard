@@ -45,6 +45,7 @@ var activePath = null;
 
 setup_mouse();
 
+
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -91,6 +92,7 @@ function new_dims() {
 
     ctx.width = width;
     ctx.height = height;
+
 }
 
 function Whiteboard_OLD(){
@@ -129,6 +131,7 @@ function Whiteboard_OLD(){
                     this.ctx.fillStyle = fill;
                     this.ctx.stroke();
                     this.ctx.closePath();
+
                     break;
 
                 case "clear":
@@ -146,6 +149,7 @@ function Whiteboard_OLD(){
         var instance = this;
 
         this.canvas = document.getElementById("whiteboard");
+
 
         var computed = window.getComputedStyle(this.canvas);
 
