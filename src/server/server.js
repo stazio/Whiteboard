@@ -109,6 +109,8 @@ function create_server(port, ssl, privkey, certificate) {
     var server;
     if (ssl) {
         console.log("Starting the server using SSL!");
+        console.log("Privilege Key Path" + privkey);
+        console.log("Certificate Key Path" + certificate);
         server = require('https').createServer({
             key: fs.readFileSync(privkey),
             certificate: fs.readFileSync(certificate)
