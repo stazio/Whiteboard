@@ -3,7 +3,12 @@ var WebSocket = require('ws');
 var config = require('config');
 
 var ws = create_server(1234, config.get('ssl.enabled'), config.get('ssl.privkey'), config.get('ssl.certificate'));
-var room = {};
+
+if (fs.existsSync("config/storage.json"))
+var room = JSON.parse(fs.readFileSync("config/storage.json"));
+else
+    room = {};
+
 var nextPathID = 1;
 
 ws.on('connection', function(client, request){
@@ -125,3 +130,7 @@ setInterval(function () {
        conn.ping('', false, true);
     });
 }, 10 * 1000); // 10 seconds
+
+setInterval(function() {
+    fs.writeFile("config/storage.json", JSON.stringify(room));
+}, 10 * 1000);
