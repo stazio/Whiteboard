@@ -11,3 +11,4 @@ node_js:
 before_install:
   - cd src/server
   - mv config/storage-test.json config/storage.json
+  - cp config/default-example.json config/default.json
