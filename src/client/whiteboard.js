@@ -99,9 +99,16 @@ function setup_mouse_touch() {
         }
     }
 
+    function onMouseEnter(e) {
+        if (e.buttons === 1)
+            onMouseDown(e);
+    }
+
     canvas.onmousedown = onMouseDown;
     canvas.onmouseup = onMouseUp;
     canvas.onmousemove = onMouseMove;
+    canvas.onmouseleave = onMouseUp;
+    canvas.onmouseenter = onMouseEnter;
 
 
     canvas.addEventListener('touchstart', function (e) {
