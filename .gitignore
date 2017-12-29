@@ -1,4 +1,7 @@
-# Remove nodejs stuff
+# NPM Management
 node_modules
 package-lock.json
-/home/staz/PhpstormProjects/WebBoard/src/server/config/default.json
+
+# Removes defaults for own environment
+storage.json
+default.json
