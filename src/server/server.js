@@ -13,6 +13,12 @@ var nextPathID = 1;
 
 ws.on('connection', function (client, request) {
     client.request = request;
+
+    client.send(JSON.stringify({
+        paths: room,
+        type: "room"
+    }));
+
     console.log("[" + client.request.connection.remoteAddress + "]: joined");
 
     client.on('message', function (text) {
