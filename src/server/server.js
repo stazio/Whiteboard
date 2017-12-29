@@ -113,7 +113,7 @@ function create_server(port, ssl, privkey, certificate) {
         console.log("Certificate Key Path" + certificate);
         server = require('https').createServer({
             key: fs.readFileSync(privkey),
-            certificate: fs.readFileSync(certificate)
+            cert: fs.readFileSync(certificate)
         });
         server.listen(port);
     } else {
