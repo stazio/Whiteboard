@@ -108,12 +108,14 @@ function sendExcept(clientt, pathID, path) {
 function create_server(port, ssl, privkey, certificate) {
     var server;
     if (ssl) {
+        console.log("Starting the server using SSL!");
         server = require('https').createServer({
             key: fs.readFileSync(privkey),
             certificate: fs.readFileSync(certificate)
         });
         server.listen(port);
     } else {
+        console.log("Starting the server without SSL! You might wanna fix that maybe?");
         server = require('http').createServer();
         server.listen(port);
     }
