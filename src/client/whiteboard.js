@@ -26,40 +26,40 @@ function clear_screen() {
 }
 
 function setup_mouse() {
-    canvas.onmousedown = function(e) {
+    canvas.onmousedown = function (e) {
         var currX = e.clientX + window.pageXOffset,
-        currY = e.clientY + window.pageYOffset - canvas.offsetTop;
+            currY = e.clientY + window.pageYOffset - canvas.offsetTop;
         //new_path(currX, currY);
         activePath = true;
-        ctx.paths[0].push(width+";"+fill);
+        ctx.paths[0].push(width + ";" + fill);
         ctx.paths[0].push([currX, currY]);
         message({
-            "type" : "path",
-            "paths" : [
-                width+";"+fill,
+            "type": "path",
+            "paths": [
+                width + ";" + fill,
                 [currX, currY]
             ]
         });
     };
 
-    canvas.onmouseup = function(e) {
+    canvas.onmouseup = function (e) {
         ctx.paths[0].push("END");
         message({
-            "type" : "path",
-            "path" : "END"
+            "type": "path",
+            "path": "END"
         });
         activePath = false;
         render();
     };
 
-    canvas.onmousemove = function(e) {
+    canvas.onmousemove = function (e) {
         if (activePath) {
             var currX = e.clientX + window.pageXOffset,
                 currY = e.clientY + window.pageYOffset - canvas.offsetTop;
             ctx.paths[0].push([currX, currY]);
             message({
                 "type": "path",
-                "path" : [currX, currY]
+                "path": [currX, currY]
             });
             render();
         }
@@ -92,17 +92,19 @@ var width = 9, fill = "red";
 
 for (var i in document.getElementById("buttons").children) {
     if (document.getElementById("buttons").children[i].name === "color") {
-        document.getElementById("buttons").children[i].onclick = function(e) {
+        document.getElementById("buttons").children[i].onclick = function (e) {
             fill = e.target.value;
         }
     }
 }
-document.getElementsByName("width")[0].onclick = function(e) {
+document.getElementsByName("width")[0].onclick = function (e) {
     width = e.target.value;
 };
 document.getElementsByName("width")[0].value = width;
 
-document.getElementsByName("clear")[0].onclick = function(){message({type: "clear"})};
+document.getElementsByName("clear")[0].onclick = function () {
+    message({type: "clear"})
+};
 
 
 setup_mouse();
@@ -126,23 +128,23 @@ function render() {
 
         ctx.beginPath();
         for (var ii = 0, len = group.length; ii <= len; ii++) {
-            var pointA = group[ii], pointB = group[ii+1];
+            var pointA = group[ii], pointB = group[ii + 1];
 
-                if (Array.isArray(pointA) && Array.isArray(pointB)) {
-                    var mid = [
-                        pointA[0] + (pointB[0] - pointA[0]) / 2,
-                        pointA[1] + (pointB[1] - pointA[1]) / 2
-                    ];
+            if (Array.isArray(pointA) && Array.isArray(pointB)) {
+                var mid = [
+                    pointA[0] + (pointB[0] - pointA[0]) / 2,
+                    pointA[1] + (pointB[1] - pointA[1]) / 2
+                ];
 
-                    //this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
-                    ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
-                }else if (pointA === "END" || pointB === "END")
-                    deletes.push(i);
-                else if ((pointB && pointB.split) || (pointA && pointA.split)) {
-                    var split = (pointB && pointB.split) ? pointB.split(";") : null;
-                    if (split === null || split.length !== 2)
-                        split = (pointA && pointA.split) ? pointA.split(";") : null;
-                    if (split && split.length == 2) {
+                //this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+                ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+            } else if (pointA === "END" || pointB === "END")
+                deletes.push(i);
+            else if ((pointB && pointB.split) || (pointA && pointA.split)) {
+                var split = (pointB && pointB.split) ? pointB.split(";") : null;
+                if (split === null || split.length !== 2)
+                    split = (pointA && pointA.split) ? pointA.split(";") : null;
+                if (split && split.length == 2) {
 
                     ctx.stroke();
                     ctx.closePath();
@@ -151,8 +153,8 @@ function render() {
                     ctx.lineJoin = ctx.lineCap = 'round';
                     ctx.lineWidth = split[0];
                     ctx.strokeStyle = split[1];
-                    }
                 }
+            }
         }
 
         ctx.stroke();

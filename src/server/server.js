@@ -5,13 +5,13 @@ var config = require('config');
 var ws = create_server(1234, config.get('ssl.enabled'), config.get('ssl.privkey'), config.get('ssl.certificate'));
 
 if (fs.existsSync("config/storage.json"))
-var room = JSON.parse(fs.readFileSync("config/storage.json"));
+    var room = JSON.parse(fs.readFileSync("config/storage.json"));
 else
     room = {};
 
 var nextPathID = 1;
 
-ws.on('connection', function(client, request){
+ws.on('connection', function (client, request) {
     client.request = request;
     console.log("[" + client.request.connection.remoteAddress + "]: joined");
 
@@ -32,7 +32,7 @@ ws.on('connection', function(client, request){
                         }
                         break;
                     case "clear":
-                        broadcast( {"type": "clear"});
+                        broadcast({"type": "clear"});
                         room = {};
                         break;
                 }
@@ -40,15 +40,17 @@ ws.on('connection', function(client, request){
         }
     });
 
-    client.on('close', function() {
+    client.on('close', function () {
         console.log("[" + client.request.connection.remoteAddress + "]: left");
     });
 
-    client.on('error', function(errno, code) {
+    client.on('error', function (errno, code) {
         console.log("[" + client.request.connection.remoteAddress + "]: has had an error. " + "Error Code: " + code);
     });
 
-    client.on('pong', function(){client.isAlive = true});
+    client.on('pong', function () {
+        client.isAlive = true
+    });
 });
 
 function clientErr(client, error) {
@@ -63,11 +65,11 @@ function process_path(client, path) {
             sendExcept(client, client.activePathID, path);
         }
         client.activePathID = null;
-    }else if (typeof path === "string") {
+    } else if (typeof path === "string") {
         client.activePathID = nextPathID++;
         room[client.activePathID] = [path];
         sendExcept(client, client.activePathID, path);
-    }else {
+    } else {
         if (room[client.activePathID]) {
             room[client.activePathID].push(path);
             sendExcept(client, client.activePathID, path);
@@ -79,10 +81,12 @@ function sendExcept(clientt, pathID, path) {
     ws.clients.forEach(function each(client) {
         if (client !== clientt && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify({
-                "type" : "path",
-                "id" : pathID,
-                "path" : path
-            }), function(err){clientErr(client, err);});
+                "type": "path",
+                "id": pathID,
+                "path": path
+            }), function (err) {
+                clientErr(client, err);
+            });
         }
     });
 }
@@ -103,7 +107,7 @@ function create_server(port, ssl, privkey, certificate) {
             certificate: fs.readFileSync(certificate)
         });
         server.listen(port);
-    }else {
+    } else {
         server = require('http').createServer();
         server.listen(port);
     }
@@ -114,23 +118,25 @@ function create_server(port, ssl, privkey, certificate) {
 function broadcast(data) {
     ws.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(data), function(err){clientErr(client, err);});
+            client.send(JSON.stringify(data), function (err) {
+                clientErr(client, err);
+            });
         }
     });
 }
 
 setInterval(function () {
-    ws.clients.forEach(function(conn) {
-       if (conn.isAlive === false) {
-           console.log("[" + conn.request.connection.remoteAddress + "]: timed out");
-           conn.terminate();
-       }
+    ws.clients.forEach(function (conn) {
+        if (conn.isAlive === false) {
+            console.log("[" + conn.request.connection.remoteAddress + "]: timed out");
+            conn.terminate();
+        }
 
-       conn.isAlive = false;
-       conn.ping('', false, true);
+        conn.isAlive = false;
+        conn.ping('', false, true);
     });
 }, 10 * 1000); // 10 seconds
 
-setInterval(function() {
+setInterval(function () {
     fs.writeFile("config/storage.json", JSON.stringify(room));
 }, 10 * 1000);

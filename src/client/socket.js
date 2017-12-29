@@ -1,6 +1,7 @@
 var ws = create_socket();
 
 var queue = [];
+
 function message(data) {
     if (Array.isArray(data))
         queue = Array.concat(queue, data);
@@ -9,7 +10,7 @@ function message(data) {
     }
 }
 
-ws.onmessage = function(e) {
+ws.onmessage = function (e) {
     var str = e.data;
     var json = JSON.parse(str);
     switch (json.type) {
@@ -34,12 +35,12 @@ ws.onmessage = function(e) {
     }
 };
 
-ws.onerror = function(e){
+ws.onerror = function (e) {
     alert("An error has occurred!");
 
 };
 
-ws.onclose = function(e) {
+ws.onclose = function (e) {
     alert("Disconnected.");
     canvas.onmousedown = canvas.onmousemove = canvas.onmouseup = undefined;
     document.getElementsByName("clear")[0].onclick = undefined;
@@ -51,14 +52,14 @@ function create_socket() {
     var host = location.hostname;
     var port = 1234;
 // create socket
-  var ws= new WebSocket(ssl + "://" + host + ":" + port);
+    var ws = new WebSocket(ssl + "://" + host + ":" + port);
 
-setInterval(function() {
-    if (queue && queue.length > 0 && ws && ws.readyState === ws.OPEN) {
-        ws.send(JSON.stringify(queue));
-        queue = [];
-    }
-}, 50); // every 50 mills send an update to the server with a new queue
+    setInterval(function () {
+        if (queue && queue.length > 0 && ws && ws.readyState === ws.OPEN) {
+            ws.send(JSON.stringify(queue));
+            queue = [];
+        }
+    }, 50); // every 50 mills send an update to the server with a new queue
 
-return ws;
+    return ws;
 }
