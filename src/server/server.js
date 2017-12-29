@@ -2,7 +2,6 @@ eval(require('fs').readFileSync('../common/Messages.js', "utf8"));
 var ws = create_server(1234, false);
 var room = new Room(1000, 1000, broadcast);
 
-
 ws.on('connection', function(client, request){
     console.log("NEW CLIENT!");
     client.send(JSON.stringify(room.turn_to_messages()));
@@ -28,9 +27,17 @@ ws.on('connection', function(client, request){
                     case "clear":
                         room.clear();
                         break;
+
+                    case "end_path":
+                        var id = data.id;
+                        if (room.paths[id] && room.paths[id].points <= 1)
+                            delete room.paths[id];
+                        broadcast(Messages.END_PATH(id));
+                        break;
                 }
             }
         }
+        console.log(Object.keys(room.paths).length);
     });
 });
 

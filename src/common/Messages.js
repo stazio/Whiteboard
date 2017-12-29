@@ -10,8 +10,15 @@ var Messages = {
     NEW_PATH : function(path) {
         return {
             action: "new_path",
-            path: path.to_dictionary()
+            path: path
         };
+    },
+
+    END_PATH : function(id) {
+        return {
+            action: "end_path",
+            id: id
+        }
     },
 
     NEW_DIMENSIONS : function(width, height) {
@@ -41,7 +48,7 @@ function Room(width, height, broadcast) {
 
     this.append_path_points = function(id, points) {
         if (this.paths.hasOwnProperty(id))
-            this.paths[id].append(points);
+            this.paths[id].points.push(points);
 
         if (this.broadcast)
         this.broadcast(Messages.APPEND_PATH(id, points));
@@ -65,6 +72,7 @@ function Room(width, height, broadcast) {
     };
 
     this.clear = function() {
+        console.log('hi');
         this.paths = {};
         if (this.broadcast)
             this.broadcast(Messages.CLEAR());
@@ -83,19 +91,6 @@ function Path(id, width, fill, points) {
     this.width = width;
     this.fill = fill;
     this.points = points;
-
-    this.to_dictionary = function() {
-        return {
-            id: this.id,
-            width: this.width,
-            fill: this.fill,
-            points: this.points
-        };
-    };
-
-    this.append = function(point) {
-        this.points.push(point);
-    };
 }
 
 /**

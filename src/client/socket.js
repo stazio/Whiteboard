@@ -23,6 +23,7 @@ ws.onmessage = function(e) {
                     break;
                 case "new_path":
                     room.add(parse_path(json.path));
+                    make_it_an_image(0);
                     render();
                     break;
                 case "new_dimensions":
@@ -32,7 +33,19 @@ ws.onmessage = function(e) {
                     break;
                 case "clear":
                     room.clear();
+                    image = null;
                     render();
+                    break;
+
+                case "end_path":
+                    make_it_an_image(json.id);
+                    render();
+                    for (var id in room.paths) {
+                        if (room.paths.hasOwnProperty(id)) {
+                            if (id != json.id)
+                                delete room.paths[id];
+                        }
+                    }
                     break;
             }
         }

@@ -29,6 +29,7 @@ function new_path(x, y) {
 }
 
 function end_path() {
+    send(Messages.END_PATH(activePath));
     activePath = null;
 }
 
@@ -38,16 +39,17 @@ function append_path(x, y) {
     }
 }
 
-
 var canvas = setup_canvas();
 var ctx = canvas.getContext("2d");
 var activePath = null;
+var image = null;
 
 setup_mouse();
 
-
 function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (image)
+        ctx.putImageData(image,0,0, 0, 0, canvas.width, canvas.height);
 
     var paths = room.paths;
     for (var id in paths) {
@@ -65,6 +67,7 @@ function render() {
                     ];
 
                     this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+                    this.ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
 
                     pointA = points[i];
                     pointB = points[i + 1];
@@ -81,6 +84,59 @@ function render() {
         }
     }
 }
+
+
+function make_it_an_image(exclude) {
+    var canv = document.createElement("canvas");
+
+    canv.width = canvas.width;
+    canv.height = canvas.height;
+    var ctx = canv.getContext("2d");
+
+    if (image)
+        ctx.putImageData(image, 0, 0);
+
+    for (var id in room.paths) {
+        if (room.paths.hasOwnProperty(id) && exclude != id) {
+            var path = room.paths[id];
+            var points = path.points;
+
+            if (points && points.length > 1) {
+                var pointA = points[0], pointB = points[1];
+                ctx.moveTo(pointA[0], pointA[1]);
+
+                ctx.beginPath();
+                for (var i = 0, len = points.length; i < len; i++) {
+                    var mid = [
+                        pointA[0] + (pointB[0] - pointA[0]) / 2,
+                        pointA[1] + (pointB[1] - pointA[1]) / 2
+                    ];
+
+                    // Two of these because some things are actually incompetent that's why...
+                    ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+                    ctx.quadraticCurveTo(pointB[0], pointB[1], mid[0], mid[1]);
+
+                    pointA = points[i];
+                    pointB = points[i + 1];
+                    if (!pointA || !pointB)
+                        break;
+                }
+            }
+
+            ctx.lineJoin = this.ctx.lineCap = 'round';
+            ctx.lineWidth = path.width;
+            ctx.fillStyle = path.fill;
+            ctx.stroke();
+            ctx.closePath();
+
+
+            // Because of some strange ass shit, when rendering the ends, stuff can happen.
+            // I need to have this here... Hopefully?
+        }
+    }
+    image = ctx.getImageData(0, 0, canv.width, canv.height);
+}
+
 
 function new_dims() {
     var width = room.width;
