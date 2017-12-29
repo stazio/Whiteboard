@@ -6,7 +6,14 @@ node_js:
   - "7"
   - "6"
 
+env:
+  - USE_SSL=true
+  - USE_SSL=false
+
 before_install:
   - cd src/server
   - mv config/storage-test.json config/storage.json
   - cp config/default-example.json config/default.json
+
+  - if [ $USE_SSL == 'true' ]; then echo '{"ssl": {"enabled": true, "privkey": "key.pem", "certificate": "cert.pem"}}' > config/default.json
+  - if [ $USE_SSL ]; then openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 100 -node

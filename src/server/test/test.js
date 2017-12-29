@@ -6,8 +6,11 @@ let ws;
 
 beforeEach(function() {
     let port = Math.floor(1000 + (Math.random() * 1000));
-    server.initialize(port, 0);
-    ws = new WebSocket("ws://localhost:" + port);
+    let ssl = server.initialize(port, 0);
+    if (ssl)
+        ws = new WebSocket("wss://localhost:" + port);
+    else
+        ws =new WebSocket("ws://localhost:" + port);
 });
 
 it ('connect', function(done){

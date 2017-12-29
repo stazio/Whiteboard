@@ -155,6 +155,7 @@ function initialize(port, logLevel) {
         });
     });
 
+    return config.get('ssl.enabled');
 }
 
 function broadcast(data) {
