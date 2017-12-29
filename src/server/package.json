@@ -2,7 +2,16 @@
   "name": "server",
   "version": "0.0.1",
   "dependencies": {
-    "ws": "^3.3.3",
-    "config": "^1.29.0"
+    "config": "^1.29.0",
+    "http-shutdown": "^1.2.0",
+    "winston": "^2.4.0",
+    "ws": "^3.3.3"
+  },
+  "scripts": {
+    "test": "mocha -r './server.js' --exit"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^4.1.0"
   }
 }
