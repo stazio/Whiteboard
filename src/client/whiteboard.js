@@ -1,3 +1,4 @@
+"use strict";
 var canvas, ctx, numOfPeople;
 var isDrawing = null;
 var width = 9, fill = "red";

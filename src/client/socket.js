@@ -1,3 +1,4 @@
+"use strict";
 var ws = create_socket();
 
 var queue = [];
