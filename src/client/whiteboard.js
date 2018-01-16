@@ -1,4 +1,4 @@
-var canvas, ctx;
+var canvas, ctx, numOfPeople;
 var isDrawing = null;
 var width = 9, fill = "red";
 
@@ -48,6 +48,8 @@ function setup_buttons() {
             }
         }
     }
+    numOfPeople = document.getElementById("numOfPeople");
+
     document.getElementsByName("width")[0].onclick = function (e) {
         width = e.target.value;
     };

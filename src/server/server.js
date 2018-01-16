@@ -87,6 +87,7 @@ function create_server(port, ssl, privkey, certificate) {
     return new WebSocket.Server({server: webserver});
 }
 
+var numberOfPeople = 0;
 function initialize(port, logLevel) {
     if (logLevel !== undefined)
     winston.level = logLevel;
@@ -102,8 +103,13 @@ function initialize(port, logLevel) {
 
         client.send(JSON.stringify({
             paths: room,
-            type: "room"
+            type: "room",
+            numberOfPeople: ++numberOfPeople
         }));
+        broadcast({
+            type: 'number_of_people',
+            number: numberOfPeople
+        });
 
         winston.info("[" + client.request.connection.remoteAddress + "]: joined");
 
@@ -144,6 +150,11 @@ function initialize(port, logLevel) {
 
         client.on('close', function () {
             winston.info("[" + client.request.connection.remoteAddress + "]: left");
+            numberOfPeople--;
+            broadcast({
+                type: 'number_of_people',
+                number: numberOfPeople
+            });
         });
 
         client.on('error', function (errno, code) {

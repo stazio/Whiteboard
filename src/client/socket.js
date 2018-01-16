@@ -32,6 +32,14 @@ ws.onmessage = function (e) {
                 ctx.paths[0] = [];
             render();
             break;
+        case "number_of_people":
+            var num = json.number;
+            if (num == 1)
+                 numOfPeople.innerText = "1 person connected";
+            else
+                numOfPeople.innerText = num + " people connected";
+
+            break;
     }
 };
 
